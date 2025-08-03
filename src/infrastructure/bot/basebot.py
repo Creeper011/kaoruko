@@ -20,6 +20,8 @@ class Bot(commands.AutoShardedBot):
     async def on_ready(self):
         logger.info(f"{self.user} loaded")
         await ExtensionLoader(super()).load_extensions()
+        await self.tree.sync()
+        logger.info(f"All commands Synced")
 
     def run(self):
         token = os.getenv("TOKEN")

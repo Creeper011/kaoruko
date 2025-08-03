@@ -26,9 +26,9 @@ class DownloadCog(commands.Cog):
             app_commands.Choice(name="ogg", value="ogg"),
         ]
     )
-    @app_commands.describe(url="A query or a url (Playlist not supported)",  format="The format to download")
-    async def download(self, interaction: discord.Interaction, url: str, format: app_commands.Choice[str] = "mp4"):
-        await interaction.response.defer()
+    @app_commands.describe(url="A query or a url (Playlist not supported)",  format="The format to download", invisible="If True, only you will see the result (ephemeral message)")
+    async def download(self, interaction: discord.Interaction, url: str, format: app_commands.Choice[str] = "mp4", invisible: bool = False):
+        await interaction.response.defer(ephemeral=invisible)
 
         if not validators.url(url):
             url = f"ytsearch:{url}"
