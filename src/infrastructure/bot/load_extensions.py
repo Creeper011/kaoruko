@@ -37,7 +37,8 @@ class ExtensionLoader():
                     rel_path = os.path.relpath(os.path.join(root, file), self.root_path) 
                     mod_path = os.path.splitext(rel_path.replace(os.sep, "."))[0]    
                     cog_path = f"{self.extensions_path}.{mod_path}"                     
-
+                    if cog_path in self.bot.extensions:
+                        continue
                     try:
                         start = time.perf_counter()
                         await self.bot.load_extension(cog_path)

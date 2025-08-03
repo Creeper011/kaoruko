@@ -12,5 +12,7 @@ class DownloadResult:
 @dataclass
 class SpeedAudioResult:
     factor: float = None
-    filepath: Path = None
+    filepath: Optional[Path] = None
     elapsed: float = None
+    file_size: Optional[int] = None
+    drive_link: Optional[str] = None
