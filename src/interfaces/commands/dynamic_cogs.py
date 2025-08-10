@@ -1,7 +1,7 @@
 from discord.ext import commands
-from src.domain.usecases.usecase_dynamiccogs import DynamicCogsUsecase
-from src.infrastructure.constants.result import Result
-from src.infrastructure.bot.utils.error_embed import create_error
+from src.domain.usecases.dynamiccogs import DynamicCogsUsecase
+from src.infrastructure.constants import Result
+from src.infrastructure.bot.utils import create_error
 
 class DynamicCogsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):

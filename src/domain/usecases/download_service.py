@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from src.infrastructure.services.downloader import Downloader
 from src.infrastructure.services.drive import Drive
 from src.domain.entities import DownloadResult
-from src.infrastructure.constants.result import Result
+from src.core.models import Result
 
 logger = logging.getLogger(__name__)
 

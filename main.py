@@ -1,7 +1,7 @@
 import argparse
-from src.config.logging_setup import LoggingSetup
-from src.config.settings import SettingsManager
-from src.infrastructure.bot.basebot import Bot
+from src.config import LoggingSetup
+from src.config import SettingsManager
+from src.infrastructure.bot import Bot
 
 CONFIG_PATH_YAML = "./config.yml"
 ENV_PATH = ".env"

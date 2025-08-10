@@ -10,7 +10,7 @@ from src.config.settings import SettingsManager
 logger = logging.getLogger(__name__)
 
 class Drive():
-    """Google Drive Utils - Async Version"""
+    """Google Drive Utils"""
     
     def __init__(self, folder) -> None:
         self.folder = folder

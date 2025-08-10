@@ -1,11 +1,10 @@
-import asyncio
 import discord
 import logging
 from discord.ext import commands
-from src.infrastructure.constants.error_types import ErrorTypes
-from src.domain.usecases.convert_to_audio import ConvertToAudio
-from src.domain.usecases.speed_audio import SpeedControlAudio
-from src.infrastructure.bot.utils.error_embed import create_error
+from src.infrastructure import ErrorTypes
+from src.domain.usecases import ConvertToAudio
+from src.domain.usecases import SpeedControlMedia
+from src.infrastructure.bot.utils import create_error
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,7 @@ class ToAudioCog(commands.Cog):
         self.bot = bot
         self.bot_prefix = self.bot.command_prefix[1:]+"?"
         self.converter = ConvertToAudio()
-        self.speed_audio = SpeedControlAudio()
+        self.speed_audio = SpeedControlMedia()
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

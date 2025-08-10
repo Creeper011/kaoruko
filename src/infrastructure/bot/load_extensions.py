@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class ExtensionLoader():
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.extensions_path = SettingsManager().get({"Bot": "extensionsPath"})
+        self.extensions_path = SettingsManager().get({"Bot": "extensions_path"})
         if not self.extensions_path:
             raise ValueError("No extensions path configured in settings.")
         self.root_path = os.path.join(*self.extensions_path.split("."))
@@ -33,7 +33,6 @@ class ExtensionLoader():
         for root, dirs, files in os.walk(self.root_path):
             for file in files:
                 if file.endswith('.py'):
-                    logger.debug(f"Loading files: {files}")
                     rel_path = os.path.relpath(os.path.join(root, file), self.root_path) 
                     mod_path = os.path.splitext(rel_path.replace(os.sep, "."))[0]    
                     cog_path = f"{self.extensions_path}.{mod_path}"                     

@@ -4,8 +4,9 @@ import validators
 import os
 from discord.ext import commands
 from discord import app_commands
-from src.domain.usecases.download_service import DownloaderService
-from src.infrastructure.bot.utils.error_embed import create_error, ErrorTypes
+from src.domain.usecases import DownloaderService
+from src.infrastructure.bot.utils import create_error
+from src.infrastructure.constants import ErrorTypes
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class DownloadCog(commands.Cog):
                 await interaction.followup.send("Download has been cancelled.")
                 return
                 
-            if result.ok:
+            if result.ok and download_result.is_success():
                 # Handle file path (large files that couldn't be uploaded to drive)
                 if download_result.filepath:
                     if not os.path.exists(download_result.filepath):

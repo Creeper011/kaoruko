@@ -8,7 +8,7 @@ from pathlib import Path
 from moviepy import VideoFileClip
 from src.config.settings import SettingsManager
 from src.infrastructure.constants.error_types import ErrorTypes
-from src.infrastructure.constants.result import Result
+from src.core.models import Result
 
 class ConvertToAudio():
     def __init__(self):
