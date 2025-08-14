@@ -1,4 +1,6 @@
 import time
+import platform
+import distro
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -23,6 +25,7 @@ class BotInfo(commands.Cog):
             f"> Name: {self.bot.user.name}\n"
             f"> Shards: {self.bot.shard_count}\n"
             f"> Shard ID: {self.bot.shard_id}\n"
+            f"> Running on system: {distro.name()} ({platform.system()})\n"
             f"> Running on: Python {__import__('platform').python_version()}\n"
             f"> Gateway ping: {gw_ping} ms\n"
             f"> REST ping: {rest_ping} ms"

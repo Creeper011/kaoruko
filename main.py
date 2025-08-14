@@ -1,6 +1,5 @@
 import argparse
-from src.config import LoggingSetup
-from src.config import SettingsManager
+from src.infrastructure.injector import Injector
 from src.infrastructure.bot import Bot
 
 CONFIG_PATH_YAML = "./config.yml"
@@ -10,12 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action="store_true", help="debug")
 args = parser.parse_args()
 
-settings = SettingsManager(CONFIG_PATH_YAML)
-settings.load_env()
-LoggingSetup(is_debug=args.debug)
-
-bot = Bot()
-bot.run()
-
-
-
+if __name__ == "__main__":
+    dependencies = Injector.inject(CONFIG_PATH_YAML, ENV_PATH, args.debug)
+    bot = Bot(**dependencies)
+    bot.run()
