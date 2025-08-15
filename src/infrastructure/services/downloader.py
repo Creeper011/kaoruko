@@ -77,7 +77,8 @@ class Downloader:
     def _resolve_format(self, format: str):
         match format:
             case "mp4":
-                fmt = "bestvideo+bestaudio/best"
+                # Try H.264, fallback to bestvideo+bestaudio/best
+                fmt = "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
                 post = [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}]
             case "mp3":
                 fmt = "bestaudio/best"
@@ -86,7 +87,8 @@ class Downloader:
                 fmt = "bestvideo+bestaudio/best"
                 post = [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mkv"}]
             case "webm":
-                fmt = "bestvideo+bestaudio/best"
+                # Try VP9, fallback to bestvideo+bestaudio/best
+                fmt = "bestvideo[ext=webm][vcodec=vp9]+bestaudio[ext=webm]/bestvideo+bestaudio/best"
                 post = [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "webm"}]
             case "ogg":
                 fmt = "bestaudio/best"

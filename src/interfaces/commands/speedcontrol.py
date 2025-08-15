@@ -2,7 +2,7 @@ import logging
 import discord
 from discord.ext import commands
 from discord import app_commands
-from src.domain.usecases import SpeedControlMedia
+from src.interfaces.services.service_provider import ServiceProvider
 from src.infrastructure.bot.utils import create_error
 from src.infrastructure.constants import ErrorTypes
 from src.domain.entities import SpeedMediaResult
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class SpeedControlCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.speed_control = SpeedControlMedia()
+        self.service_provider = ServiceProvider()
 
     @app_commands.command(name="speed", description="Change media speed of an uploaded file")
     @app_commands.describe(
@@ -24,12 +24,13 @@ class SpeedControlCog(commands.Cog):
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def speed(self, interaction: discord.Interaction, factor: app_commands.Range[float, 0.1, 2.0], attachment: discord.Attachment, preserve_pitch: bool = False, invisible: bool = False):
-        await interaction.response.defer(ephemeral=invisible)
+        await interaction.response.defer(thinking=True, ephemeral=invisible)
 
         try:
             file_data = await attachment.read()
             
-            result: Result = await self.speed_control.change_speed_from_stream(
+            speed_control = self.service_provider.get_speed_control_media()
+            result: Result = await speed_control.change_speed_from_stream(
                 file_data=file_data,
                 filename=attachment.filename,
                 content_type=attachment.content_type,

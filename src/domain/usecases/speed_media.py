@@ -7,16 +7,17 @@ import shutil
 from pathlib import Path
 from src.domain.entities import SpeedMediaResult
 from src.infrastructure.constants import Result, ErrorTypes
-from src.infrastructure.services import AudioSpeedService, VideoSpeedService
-from src.infrastructure.services.drive import Drive
+from src.domain.ports.drive_port import DrivePort
+from src.domain.ports.speed_service_port import SpeedServicePort
 
 logger = logging.getLogger(__name__)
 
 class SpeedControlMedia():
-    def __init__(self):
+    def __init__(self, drive_port: DrivePort, audio_speed_port: SpeedServicePort, video_speed_port: SpeedServicePort):
         self.FILE_SIZE_LIMIT = 120 * 1024 * 1024  # 120 MB
-        self.drive = Drive("")
-        self.drive.uploadToDrive        
+        self.drive = drive_port
+        self.audio_speed_service = audio_speed_port
+        self.video_speed_service = video_speed_port
         # Supported MIME types
         self.SUPPORTED_VIDEO_MIMES = [
             "video/mp4", "video/avi", "video/quicktime", "video/webm", 
@@ -139,7 +140,7 @@ class SpeedControlMedia():
             return Result.failure("Unsupported audio MIME type.", ErrorTypes.INVALID_FILE_TYPE)
         
         temp_dir = self._create_temp_dir()
-        default_output_path = temp_dir / f"output_{filepath.stem}_speed_{speed}{filepath.suffix}"
+        default_output_path = temp_dir / f"{filepath.stem}{filepath.suffix}"
         
         try:
             start_time = time.time()
@@ -148,11 +149,11 @@ class SpeedControlMedia():
             
             if is_video:
                 success, error, output_path = await asyncio.to_thread(
-                    VideoSpeedService().process, filepath, default_output_path, speed, preserve_pitch
+                    self.video_speed_service.process, filepath, default_output_path, speed, preserve_pitch
                 )
             elif is_audio:
                 success, error, output_path = await asyncio.to_thread(
-                    AudioSpeedService().process, filepath, default_output_path, speed, preserve_pitch
+                    self.audio_speed_service.process, filepath, default_output_path, speed, preserve_pitch
                 )
             else:
                 logger.error(f"File is neither audio nor video: {filepath}")
@@ -164,13 +165,14 @@ class SpeedControlMedia():
             
             drive_link = None
             if output_path.stat().st_size > self.FILE_SIZE_LIMIT:
-                drive_link = await self.drive.upload_file(output_path)
+                drive_link = await self.drive.uploadToDrive(str(output_path))
             
             elapsed_time = time.time() - start_time
             
             result_obj = SpeedMediaResult(
                 factor=speed,
                 elapsed=elapsed_time,
+                temp_dir=temp_dir,
                 filepath=output_path,
                 file_size=output_path.stat().st_size,
                 drive_link=drive_link,

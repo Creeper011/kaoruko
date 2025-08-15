@@ -11,7 +11,7 @@ class BotInfo(commands.Cog):
 
     @app_commands.command(name="info", description="Get info about the bot")
     async def info(self, interaction: discord.Interaction, invisible: bool = False):
-        await interaction.response.defer(ephemeral=invisible)
+        await interaction.response.defer(thinking=True, ephemeral=invisible)
 
         gw_ping = round(self.bot.latency * 1000)
 

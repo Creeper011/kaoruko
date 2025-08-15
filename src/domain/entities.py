@@ -19,6 +19,7 @@ class SpeedMediaResult:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     factor: float = 1.0
     filepath: Optional[Path] = None
+    temp_dir: Optional[Path] = None
     elapsed: Optional[float] = None
     file_size: Optional[int] = None
     drive_link: Optional[str] = None

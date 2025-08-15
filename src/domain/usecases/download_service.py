@@ -3,35 +3,36 @@ import os
 import time
 import logging
 from typing import Optional, Tuple
-from src.infrastructure.services.downloader import Downloader
-from src.infrastructure.services.drive import Drive
+from src.domain.ports.downloader_port import DownloaderPort
+from src.domain.ports.drive_port import DrivePort
+from src.infrastructure.adapters.downloader_adapter import DownloaderAdapter
 from src.domain.entities import DownloadResult
 from src.core.models import Result
 
 logger = logging.getLogger(__name__)
 
 class DownloaderService:
-    def __init__(self, url: str, format: str, cancel_at_seconds: int = None, max_file_size: int = 120 * 1024 * 1024):
+    def __init__(self, url: str, format: str, drive_port: DrivePort, cancel_at_seconds: int = None, max_file_size: int = 120 * 1024 * 1024):
         self.url = url
         self.format = format
         self.max_file_size = max_file_size
         self.cancel_at_seconds = cancel_at_seconds
-        self.drive = Drive("")
-        self.downloader = None
+        self.drive = drive_port
+        self.downloader: Optional[DownloaderPort] = None
         self._temp_file_paths = []  # List to track temporary files
 
-    async def download(self) -> Tuple[DownloadResult, Result]:
+    async def download(self, skip_drive_upload: bool = False) -> Tuple[DownloadResult, Result]:
         start = time.time()
         try:
             if self.cancel_at_seconds:
-                downloader = Downloader(self.url, self.format)
+                downloader = DownloaderAdapter(self.url, self.format)
                 self.downloader = downloader
                 filepath = await asyncio.wait_for(
                     self._download_with_context(downloader),
                     timeout=self.cancel_at_seconds
                 )
             else:
-                async with Downloader(self.url, self.format) as downloader:
+                async with DownloaderAdapter(self.url, self.format) as downloader:
                     self.downloader = downloader
                     filepath = downloader.get_filepath()
             
@@ -52,7 +53,7 @@ class DownloaderService:
             self._temp_file_paths.append(filepath)
             logger.debug(f"File downloaded successfully: {filepath}")
             
-            download_result, result = await self._resolve_filepath(filepath, elapsed)
+            download_result, result = await self._resolve_filepath(filepath, elapsed, skip_drive_upload)
             return download_result, result
         
         except asyncio.TimeoutError:
@@ -61,6 +62,7 @@ class DownloaderService:
                 self.downloader.cancel_download()
             await self._cleanup_temp_files()
             return None, None
+        
         except Exception as error:
             logger.error(f"Download error: {error}")
             elapsed = time.time() - start
@@ -69,12 +71,12 @@ class DownloaderService:
             await self._cleanup_temp_files()
             return download_result, Result.failure(error=str(error))
 
-    async def _download_with_context(self, downloader: Downloader):
+    async def _download_with_context(self, downloader: DownloaderPort):
         """Helper method to use context manager with timeout"""
         async with downloader:
             return downloader.get_filepath()
         
-    async def _resolve_filepath(self, file_path: str, elapsed: float) -> Tuple[DownloadResult, Result]:
+    async def _resolve_filepath(self, file_path: str, elapsed: float, skip_drive_upload: bool = False) -> Tuple[DownloadResult, Result]:
         if not file_path or not os.path.exists(file_path):
             logger.error(f"File does not exist in _resolve_filepath: {file_path}")
             raise FileNotFoundError(f"File does not exist: {file_path}")
@@ -87,6 +89,13 @@ class DownloaderService:
 
         if download_result.file_size > self.max_file_size:
             logger.debug(f"File is large ({download_result.file_size} bytes), uploading to Drive")
+            # If caller asked to skip drive upload (e.g. because caller will post-process the file),
+            # return the filepath and let the caller handle upload.
+            if skip_drive_upload:
+                download_result.filepath = file_path
+                result = Result.success()
+                return download_result, result
+
             try:
                 download_result.link = await self.drive.uploadToDrive(file_path)
                 # After uploading to Drive, clean up the parent directory (UUID4)

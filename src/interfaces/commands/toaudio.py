@@ -3,7 +3,7 @@ import logging
 from discord.ext import commands
 from src.infrastructure import ErrorTypes
 from src.domain.usecases import ConvertToAudio
-from src.domain.usecases import SpeedControlMedia
+from src.interfaces.services.service_provider import ServiceProvider
 from src.infrastructure.bot.utils import create_error
 
 logger = logging.getLogger(__name__)
@@ -12,8 +12,8 @@ class ToAudioCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.bot_prefix = self.bot.command_prefix[1:]+"?"
-        self.converter = ConvertToAudio()
-        self.speed_audio = SpeedControlMedia()
+        self.converter = ConvertToAudio() # TODO: Refactor this to use a port and adapter
+        self.service_provider = ServiceProvider()
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -85,25 +85,27 @@ class ToAudioCog(commands.Cog):
                 file_size = audio_path.stat().st_size
 
             if speed != 1.0:
-                speed_result = await self.speed_audio.change_speed(speed, preserve_pitch, audio_path)
-                if not speed_result.filepath and not speed_result.drive_link:
+                speed_control = self.service_provider.get_speed_control_media()
+                speed_result = await speed_control.change_speed(audio_path, speed, preserve_pitch)
+                if not speed_result.ok:
                     await message.channel.send(embed=create_error(error=f"Error changing speed",
-                    code=f"{speed_result}", type=ErrorTypes.UNKNOWN))
+                    code=f"{speed_result.error}", type=ErrorTypes.UNKNOWN))
                     return
                 
+                speed_result_value = speed_result.value
                 # Use drive_link if available, otherwise use filepath
-                if speed_result.drive_link:
+                if speed_result_value.drive_link:
                     pitch_info = f" (pitch preserved)" if preserve_pitch else ""
                     await message.channel.send(
-                        content=f"Audio extracted with speed {speed}x{pitch_info}!\nFile size: {file_size / (1024 * 1024):.2f}MB, Convert time: {convert_elapsed:.2f}s, Speed time: {speed_result.elapsed:.2f}s\n(File too large, uploaded to Drive)\nUrl:{speed_result.drive_link}",
+                        content=f"Audio extracted with speed {speed}x{pitch_info}!\nFile size: {file_size / (1024 * 1024):.2f}MB, Convert time: {convert_elapsed:.2f}s, Speed time: {speed_result_value.elapsed:.2f}s\n(File too large, uploaded to Drive)\nUrl:{speed_result_value.drive_link}",
                     )
                     return
                 else:
-                    audio_path = speed_result.filepath
+                    audio_path = speed_result_value.filepath
 
             speed_info = f" with speed {speed}x" if speed != 1.0 else ""
             pitch_info = f" (pitch preserved)" if speed != 1.0 and preserve_pitch else ""
-            speed_time = speed_result.elapsed if speed != 1.0 else 0
+            speed_time = speed_result.value.elapsed if speed != 1.0 and 'speed_result' in locals() else 0
             await message.channel.send(
                 content=f"Audio extracted{speed_info}{pitch_info}!\nFile size: {file_size / (1024 * 1024):.2f}MB, Convert time: {convert_elapsed:.2f}s, Speed time: {speed_time:.2f}s",
                 file=discord.File(audio_path, filename=audio_path.name)
