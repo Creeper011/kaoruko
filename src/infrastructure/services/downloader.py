@@ -4,45 +4,68 @@ import uuid
 import os
 import shutil
 import asyncio
-import glob
-from src.config.settings import SettingsManager
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_SETTINGS = {
+    "temp_dir": "temp/downloads",
+    "yt_dlp_options": {
+        'format': 'best',
+        'postprocessors': [],
+        'windowsfilenames': True,
+        'restrictfilenames': True,
+        'noplaylist': True,
+        'quiet': True,
+        'no_warnings': True,
+        'concurrent_fragment_downloads': 10,
+        'external_downloader': 'aria2c',
+        'external_downloader_args': {
+            'default': ['-x', '16', '-s', '16', '-k', '1M']
+        },
+        'match_filter': yt_dlp.utils.match_filter_func("!is_live"),
+    }
+}
+
 class Downloader:
-    def __init__(self, url: str, format: str):
+    def __init__(self, url: str, format: str, settings: Optional[Dict[str, Any]] = None, is_url_stream: bool = False):
         self.url = url
         self.format = format
+        self.is_url_stream = is_url_stream
         self.loop = None
         self.session_id = str(uuid.uuid4())
-        self.settings = SettingsManager()
-        self.TEMP_DIR = self.settings.get({"Downloader": "temp_dir"})
-        self.CLEAN_UP_TIME = self.settings.get({"Downloader": "cleanup_time"})
+        
+        # Merge user settings with defaults
+        self.settings = DEFAULT_SETTINGS.copy()
+        if settings:
+            self._deep_update(self.settings, settings)
+        
+        self.TEMP_DIR = self.settings["temp_dir"]
         self.temp_dir = self._create_temp_directory()
         self.downloaded_filepath = None
+        self.stream_url = None
         self._download_task = None
-        self.base_yt_dlp_opts = {
-            'format': 'best',
-            'postprocessors': [],
-            'windowsfilenames': True,
-            'restrictfilenames': True,
-            'outtmpl': os.path.join(self.temp_dir, "%(title)s.%(ext)s"),
-            'noplaylist': True,
-            'quiet': True,
-            'no_warnings': True,
-            'concurrent_fragment_downloads': 10,
-            'external_downloader': 'aria2c',
-            'external_downloader_args': {
-                'default': ['-x', '16', '-s', '16', '-k', '1M']
-            },
-            'match_filter': yt_dlp.utils.match_filter_func("!is_live"),
-        }
+        # Initialize base options from settings
+        self.base_yt_dlp_opts = self.settings["yt_dlp_options"].copy()
+        # Always set output template based on temp_dir
+        self.base_yt_dlp_opts['outtmpl'] = os.path.join(self.temp_dir, "%(title)s.%(ext)s")
+
+    def _deep_update(self, target_dict: dict, update_dict: dict) -> None:
+        """Recursively update a dictionary with another dictionary."""
+        for key, value in update_dict.items():
+            if isinstance(value, dict) and key in target_dict and isinstance(target_dict[key], dict):
+                self._deep_update(target_dict[key], value)
+            else:
+                target_dict[key] = value
 
     async def __aenter__(self):
         self.loop = asyncio.get_event_loop()
         self._download_task = self.loop.run_in_executor(None, self._download)
-        filepath = await self._download_task
-        self.downloaded_filepath = filepath
+        result = await self._download_task
+        if self.is_url_stream:
+            self.stream_url = result
+        else:
+            self.downloaded_filepath = result
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -99,46 +122,47 @@ class Downloader:
         return fmt, post
 
     def _download(self):
-        """Video download"""
+        """Download or get stream URL depending on is_url_stream."""
         try:
             fmt, post = self._resolve_format(self.format)
             opts = self.base_yt_dlp_opts.copy()
             opts.update({'format': fmt, 'postprocessors': post})
-            
             logger.debug(f"Downloading with format: {fmt}, postprocessors: {post}")
             logger.debug(f"Temp directory: {self.temp_dir}")
-            
             with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(self.url, download=True)
-                # Usar template correto com separadores de path
-                template = os.path.join(self.temp_dir, "%(title)s.%(ext)s")
-                filename = ydl.prepare_filename(info, outtmpl=template)
-                logger.debug(f"Expected filename: {filename}")
-
+                info = ydl.extract_info(self.url, download=not self.is_url_stream)
+                if self.is_url_stream:
+                    url_stream = info.get('url', None)
+                    logger.debug(f"Stream URL: {url_stream}")
+                    return url_stream
+                else:
+                    template = os.path.join(self.temp_dir, "%(title)s.%(ext)s")
+                    filename = ydl.prepare_filename(info, outtmpl=template)
+                    logger.debug(f"Expected filename: {filename}")
         except Exception as e:
             logger.warning(f"First download attempt failed: {e}")
             try:
-                # tentativa com formato "best"
                 opts = self.base_yt_dlp_opts.copy()
                 opts.update({'format': 'best', 'postprocessors': []})
-                
                 logger.debug("Retrying with 'best' format")
-                
                 with yt_dlp.YoutubeDL(opts) as ydl:
-                    info = ydl.extract_info(self.url, download=True)
-                    # Usar template correto com separadores de path
-                    template = os.path.join(self.temp_dir, "%(title)s.%(ext)s")
-                    filename = ydl.prepare_filename(info, outtmpl=template)
-                    logger.debug(f"Fallback filename: {filename}")
+                    info = ydl.extract_info(self.url, download=not self.is_url_stream)
+                    if self.is_url_stream:
+                        url_stream = info.get('url', None)
+                        logger.debug(f"Stream URL: {url_stream}")
+                        return url_stream
+                    else:
+                        template = os.path.join(self.temp_dir, "%(title)s.%(ext)s")
+                        filename = ydl.prepare_filename(info, outtmpl=template)
+                        logger.debug(f"Expected filename: {filename}")
             except Exception as error:
                 logger.error(f"Download failed completely: {error}")
                 raise error
-
-        # Resolver o arquivo final baixado
-        self.downloaded_filepath = self._resolve_downloaded_file()
-        logger.debug(f"Final resolved filepath: {self.downloaded_filepath}")
-        
-        return self.downloaded_filepath
+        if self.is_url_stream:
+            return None
+        downloaded_file = self._resolve_downloaded_file()
+        logger.debug(f"Final resolved filepath: {downloaded_file}")
+        return downloaded_file
 
     def _resolve_downloaded_file(self):
         """Resolve the actual downloaded file from the temp directory"""
@@ -188,5 +212,13 @@ class Downloader:
             return None
 
     def get_filepath(self):
-        """Returns the filepath"""
+        """Returns the downloaded file path."""
         return self.downloaded_filepath
+
+    def _get_temp_dir_abspath(self):
+        """Returns the absolute path of the temporary directory."""
+        return os.path.abspath(self.temp_dir)
+
+    def get_stream_url(self):
+        """Returns the stream URL if is_url_stream is True."""
+        return self.stream_url

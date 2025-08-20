@@ -24,7 +24,7 @@ class AudioSpeedService(BaseSpeedService):
         if not filepath.exists():
             raise FileExistsError("The file not exists")
         
-        output_filename = output_path.parent / f"{speed_factor}x - {output_path.name}"
+        output_filename = output_path.parent / f"{output_path.name}"
 
         success = False
         error = None

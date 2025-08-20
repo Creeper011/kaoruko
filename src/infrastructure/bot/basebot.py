@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from src.infrastructure.bot.load_extensions import ExtensionLoader
-from src.infrastructure.exceptions.bot.basebot_exceptions import EnvNotLoadedOrTokenNotFound
 import os
 import logging
 
@@ -29,5 +28,5 @@ class Bot(commands.AutoShardedBot):
     def run(self):
         token = os.getenv("TOKEN")
         if not token:
-            raise EnvNotLoadedOrTokenNotFound("Not found TOKEN")
+            raise ValueError("Not found TOKEN")
         super().run(token, reconnect=self.reconnect)

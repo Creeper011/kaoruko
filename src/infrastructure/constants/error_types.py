@@ -1,6 +1,4 @@
-
 from enum import Enum
-
 
 class ErrorTypes(Enum):
     FILE_NOT_FOUND = "FILE_NOT_FOUND"
