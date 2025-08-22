@@ -10,3 +10,4 @@ class DownloadResult():
     speed_elapsed: float = None
     resolution: str = None
     frame_rate: float = None
+    is_audio: bool = None

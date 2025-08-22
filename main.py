@@ -1,6 +1,6 @@
 import argparse
-from src.infrastructure.injector import Injector
-from src.infrastructure.bot import Bot
+from src.application.injector import Injector
+from src.application.bot import Bot
 
 CONFIG_PATH_YAML = "./config.yml"
 ENV_PATH = ".env"

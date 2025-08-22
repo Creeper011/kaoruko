@@ -13,12 +13,12 @@ DEFAULT_SETTINGS = {
     "yt_dlp_options": {
         'format': 'best',
         'postprocessors': [],
-        'windowsfilenames': True,
         'restrictfilenames': True,
         'noplaylist': True,
         'quiet': True,
         'no_warnings': True,
         'concurrent_fragment_downloads': 10,
+        'continue_dl': True,
         'external_downloader': 'aria2c',
         'external_downloader_args': {
             'default': ['-x', '16', '-s', '16', '-k', '1M']
@@ -28,9 +28,11 @@ DEFAULT_SETTINGS = {
 }
 
 class Downloader:
-    def __init__(self, url: str, format: str, settings: Optional[Dict[str, Any]] = None, is_url_stream: bool = False):
+    def __init__(self, url: str, format: str, quality: Optional[str] = None, settings: Optional[Dict[str, Any]] = None, is_url_stream: bool = False):
         self.url = url
         self.format = format
+        self.quality = quality
+        self.is_audio = False
         self.is_url_stream = is_url_stream
         self.loop = None
         self.session_id = str(uuid.uuid4())
@@ -98,24 +100,31 @@ class Downloader:
         self._cleanup()
 
     def _resolve_format(self, format: str):
+        if self.quality:
+            video_quality, audio_quality = self.quality.split('_')
+        else:
+            video_quality, audio_quality = "", ""
+
         match format:
             case "mp4":
                 # Try H.264, fallback to bestvideo+bestaudio/best
-                fmt = "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+                fmt = f"bestvideo{video_quality}[ext=mp4][vcodec^=avc1]+bestaudio{audio_quality}[ext=m4a]/bestvideo+bestaudio/best"
                 post = [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}]
             case "mp3":
-                fmt = "bestaudio/best"
+                fmt = f"bestaudio{audio_quality}/best"
                 post = [{'key': 'FFmpegExtractAudio', 'preferredcodec': "mp3", 'preferredquality': '0'}]
+                self.is_audio = True
             case "mkv":
-                fmt = "bestvideo+bestaudio/best"
+                fmt = f"bestvideo{video_quality}+bestaudio{audio_quality}/best"
                 post = [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mkv"}]
             case "webm":
                 # Try VP9, fallback to bestvideo+bestaudio/best
-                fmt = "bestvideo[ext=webm][vcodec=vp9]+bestaudio[ext=webm]/bestvideo+bestaudio/best"
+                fmt = f"bestvideo{video_quality}[ext=webm][vcodec=vp9]+bestaudio{audio_quality}[ext=webm]/bestvideo+bestaudio/best"
                 post = [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "webm"}]
             case "ogg":
-                fmt = "bestaudio/best"
+                fmt = f"bestaudio{audio_quality}/best"
                 post = [{'key': 'FFmpegExtractAudio', 'preferredcodec': "vorbis", 'preferredquality': '0'}]
+                self.is_audio = True
             case _:
                 logger.error("error: Invalid format specified.")
                 raise ValueError("Invalid format specified.")
@@ -131,6 +140,9 @@ class Downloader:
             logger.debug(f"Temp directory: {self.temp_dir}")
             with yt_dlp.YoutubeDL(opts) as ydl:
                 info = ydl.extract_info(self.url, download=not self.is_url_stream)
+                if "entries" in info:
+                    info = info["entries"][0]
+                logger.debug(f"Info: {info}")
                 if self.is_url_stream:
                     url_stream = info.get('url', None)
                     logger.debug(f"Stream URL: {url_stream}")
@@ -147,6 +159,9 @@ class Downloader:
                 logger.debug("Retrying with 'best' format")
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     info = ydl.extract_info(self.url, download=not self.is_url_stream)
+                    if "entries" in info:
+                        info = info["entries"][0]
+                    logger.debug(f"Info: {info}")
                     if self.is_url_stream:
                         url_stream = info.get('url', None)
                         logger.debug(f"Stream URL: {url_stream}")
@@ -157,7 +172,7 @@ class Downloader:
                         logger.debug(f"Expected filename: {filename}")
             except Exception as error:
                 logger.error(f"Download failed completely: {error}")
-                raise error
+                return None, self.temp_dir, self.session_id
         if self.is_url_stream:
             return None
         downloaded_file = self._resolve_downloaded_file()
@@ -209,7 +224,7 @@ class Downloader:
             
         except Exception as e:
             logger.error(f"Error resolving downloaded file: {e}")
-            return None
+            return None, self.temp_dir, self.session_id
 
     def get_filepath(self):
         """Returns the downloaded file path."""

@@ -1,6 +1,6 @@
 import discord
 from typing import Optional
-from src.infrastructure.constants.error_types import ErrorTypes
+from src.application.constants.error_types import ErrorTypes
 
 def create_error(error: str, code: Optional[str] = None, type: Optional[ErrorTypes] = None,
                   color: Optional[int] = None, note: Optional[str] = None) -> discord.Embed:

@@ -69,7 +69,7 @@ class SpeedMedia:
         elif file_ext in self.video_extensions:
             return 'video'
         else:
-            return 'unknown'
+            raise InvalidFileType()
 
     def preserve_metadata(self, original_path: str, processed_path: str):
         """Preserve metadata between original and processed files"""
@@ -109,7 +109,7 @@ class SpeedMedia:
     async def change_speed_attachment(self, attachment: Attachment, speed: float, preserve_pitch: bool) -> SpeedMediaResult:
         start_time = time.time()
         try:
-            temp_input = f"temp_{attachment.id}_{attachment.filename}"
+            temp_input = f"{attachment.filename}"
             await attachment.save(temp_input)
             logger.debug(f"Attachment saved to {temp_input}")
 

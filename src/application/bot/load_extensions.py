@@ -2,7 +2,7 @@ import os
 import logging
 import time
 from discord.ext import commands
-from src.config.settings import SettingsManager
+from src.application.config.settings import SettingsManager
 
 logger = logging.getLogger(__name__)
 

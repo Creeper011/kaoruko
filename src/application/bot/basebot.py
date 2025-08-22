@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from src.infrastructure.bot.load_extensions import ExtensionLoader
+from src.application.bot.load_extensions import ExtensionLoader
 import os
 import logging
 

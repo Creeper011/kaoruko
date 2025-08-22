@@ -9,6 +9,7 @@ from src.domain.usecases.speedmedia import SpeedMedia, SpeedMediaResult
 from src.domain.entities.download_entity import DownloadResult
 from src.domain.exceptions.download_exceptions import MediaFilepathNotFound, FailedToUploadDrive
 from src.infrastructure.services.downloader import Downloader
+from src.infrastructure.services.drive import Drive
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,8 @@ class DownloadUsecase:
         self.cleanup_temp_dir = self.config["temp_dir"]
         self.cleanup_speed_included = False  
         self.session_id: str | None = None 
+        self.drive = Drive("")
+        self.max_file_size = 1024 * 1024 * 100
 
         logger.debug("Initialized DownloadUsecase")
 
@@ -74,7 +77,7 @@ class DownloadUsecase:
             return f"{int(width)}x{int(height)}"
         return "0x0"
 
-    async def download(self, url: str, format: str, speed: float = None, preserve_pitch: bool = True) -> SpeedMediaResult:
+    async def download(self, url: str, format: str, speed: float = None, preserve_pitch: bool = True, quality: str = None) -> SpeedMediaResult:
         """Download a media file and optionally change its speed"""
 
         start = time()
@@ -82,9 +85,8 @@ class DownloadUsecase:
         if not validators.url(url):
             url = f"ytsearch:{url}"
 
-        file_path, temp_dir, session_id = await self._download_async(url, format)
+        file_path, temp_dir, session_id, is_audio = await self._download_async(url, format, quality if quality else None)
 
-        # salva session_id global
         self.session_id = session_id  
 
         if not file_path or not os.path.exists(file_path):
@@ -100,9 +102,9 @@ class DownloadUsecase:
                 logger.error(f"Error changing speed: {result.exception}")
                 raise result.exception
 
-            if result.file_path and os.path.getsize(result.file_path) > self.speedmedia_service.max_file_size:
+            if result.file_path and os.path.getsize(result.file_path) > self.max_file_size:
                 try:
-                    drive_path = await self.speedmedia_service.drive.uploadToDrive(result.file_path)
+                    drive_path = await self.drive.uploadToDrive(result.file_path)
                     result.drive_path = drive_path
                     logger.debug(f"Large file uploaded to Drive: {drive_path}")
                 except Exception as e:
@@ -115,7 +117,8 @@ class DownloadUsecase:
                 elapsed=time() - start,
                 download_path=temp_dir,
                 speed_elapsed=result.elapsed,
-                resolution=self.get_resolution(result.file_path), frame_rate=self.get_frame_rate(result.file_path)
+                resolution=self.get_resolution(result.file_path), frame_rate=self.get_frame_rate(result.file_path),
+                is_audio=is_audio
             )
         else:
             if file_path and os.path.getsize(file_path) > self.speedmedia_service.max_file_size:
@@ -129,11 +132,12 @@ class DownloadUsecase:
         elapsed = time() - start
         return DownloadResult(file_path=file_path, drive_link=drive_path, elapsed=elapsed, download_path=temp_dir, resolution=self.get_resolution(file_path), frame_rate=self.get_frame_rate(file_path))
 
-    async def _download_async(self, url: str, format: str) -> str:
+    async def _download_async(self, url: str, format: str, quality: str = None) -> str:
         """Perform the actual download and return the downloaded file path + session_id"""
-        async with Downloader(url, format) as downloader:
+        async with Downloader(url, format, quality) as downloader:
             file_path = downloader.get_filepath()
             temp_dir = downloader._get_temp_dir_abspath()
-            session_id = downloader.session_id  # assumindo que Downloader expõe isso
+            session_id = downloader.session_id
+            is_audio = downloader.is_audio
             logger.debug(f"File downloaded at: {file_path} (session_id={session_id})")
-            return file_path, temp_dir, session_id
+            return file_path, temp_dir, session_id, is_audio

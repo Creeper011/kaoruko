@@ -3,8 +3,8 @@ import logging
 import os
 from pathlib import Path
 from discord.gateway import DiscordWebSocket
-from src.config import SettingsManager, LoggingSetup
-from src.infrastructure.bot.utils import identify
+from src.application.config import SettingsManager, LoggingSetup
+from src.application.bot.utils import identify
 
 logger = logging.getLogger(__name__)
 

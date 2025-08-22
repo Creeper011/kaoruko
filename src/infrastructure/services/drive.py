@@ -5,7 +5,7 @@ import logging
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
-from src.config.settings import SettingsManager
+from src.application.config import SettingsManager
 
 logger = logging.getLogger(__name__)
 
