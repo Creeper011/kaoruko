@@ -1,5 +1,4 @@
 import asyncio
-import mimetypes
 import os
 import shutil
 import uuid
@@ -9,7 +8,8 @@ import discord
 from pathlib import Path
 from src.infrastructure.services import AudioCrusher
 from src.infrastructure.services import DriveLoader
-from src.domain.entities import BitCrushResult
+from src.domain.entities.bitcrusher_entity import BitCrushResult
+from src.domain.services.media_validation import MediaValidationService
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class BitCrusherUsecase:
         self.temp_dir = Path("temp/bit_crusher")
         self.session_id = str(uuid.uuid4())
         self.drive = DriveLoader().get_drive()
+        self.media_validator = MediaValidationService()
 
     def _cleanup(self) -> bool:
         try:
@@ -60,14 +61,16 @@ class BitCrusherUsecase:
         session_temp_dir = self._create_session_temp_directory()
         output_path = session_temp_dir / f"{filepath.stem}_crushed{filepath.suffix}"
 
-        mime, _ = mimetypes.guess_type(filepath)
-        if not mime:
-            raise ValueError("could not detect mimetype")
-
-        if mime.startswith("audio/"):
-            crusher = AudioCrusher(bit_depth=self.bit_depth, downsample_rate=self.downsample_rate)
-        else:
-            raise ValueError(f"format not supported: {mime}")
+        # Validate media file using domain service
+        is_valid, error_msg = self.media_validator.validate_media_file(filepath)
+        if not is_valid:
+            raise ValueError(error_msg)
+        
+        # Check if it's an audio file (bit crusher only supports audio)
+        if not self.media_validator.is_audio_file(filepath):
+            raise ValueError(f"Bit crusher only supports audio files, got: {filepath.suffix}")
+        
+        crusher = AudioCrusher(bit_depth=self.bit_depth, downsample_rate=self.downsample_rate)
         
         logger.debug(f"Processing {filepath} with {crusher.__class__.__name__}")
 
@@ -78,7 +81,7 @@ class BitCrusherUsecase:
             drive_link = await self.drive.uploadToDrive(output_path)
 
         return BitCrushResult(
-            file_path=str(output_path),
+            file_path=output_path,
             drive_link=drive_link,
             elapsed=time.time() - start
         )

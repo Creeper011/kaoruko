@@ -5,6 +5,7 @@ from time import time
 import validators
 from yt_dlp import utils
 import logging
+from pathlib import Path
 from src.domain.usecases.speedmedia import SpeedMedia, SpeedMediaResult
 from src.domain.entities.download_entity import DownloadResult
 from src.domain.exceptions.download_exceptions import MediaFilepathNotFound, FailedToUploadDrive
@@ -61,17 +62,17 @@ class DownloadUsecase:
             logger.debug("Speed media service cleanup called.")
             self.speedmedia_service._cleanup()
 
-    def get_frame_rate(self, file_path: str) -> float:
+    def get_frame_rate(self, file_path: Path) -> float:
         """Get the frame rate of a video file"""
-        if os.path.exists(file_path):
-            cv2_video = cv2.VideoCapture(file_path)
+        if file_path.exists():
+            cv2_video = cv2.VideoCapture(str(file_path))
             return cv2_video.get(cv2.CAP_PROP_FPS)
         return 0.0
     
-    def get_resolution(self, file_path: str) -> str:
+    def get_resolution(self, file_path: Path) -> str:
         """Get the resolution of a video file"""
-        if os.path.exists(file_path):
-            cv2_video = cv2.VideoCapture(file_path)
+        if file_path.exists():
+            cv2_video = cv2.VideoCapture(str(file_path))
             width = cv2_video.get(cv2.CAP_PROP_FRAME_WIDTH)
             height = cv2_video.get(cv2.CAP_PROP_FRAME_HEIGHT)
             return f"{int(width)}x{int(height)}"
@@ -89,16 +90,17 @@ class DownloadUsecase:
 
         self.session_id = session_id
 
-        if not file_path or not os.path.exists(file_path):
+        file_path_obj = Path(file_path) if file_path else None
+        if not file_path_obj or not file_path_obj.exists():
             raise MediaFilepathNotFound(f"Downloaded file not found: {file_path}")
 
         drive_path = None
 
         if speed is not None:
             self.cleanup_speed_included = True
-            result: SpeedMediaResult = await self.speedmedia_service.change_speed(file_path, speed, preserve_pitch, not_upload_to_drive=True)
+            result: SpeedMediaResult = await self.speedmedia_service.change_speed(file_path_obj, speed, preserve_pitch, not_upload_to_drive=True)
 
-            if result.file_path and os.path.getsize(result.file_path) > self.max_file_size:
+            if result.file_path and result.file_path.stat().st_size > self.max_file_size:
                 try:
                     drive_path = await self.drive.uploadToDrive(result.file_path)
                     result.drive_path = drive_path
@@ -111,28 +113,28 @@ class DownloadUsecase:
                 file_path=result.file_path,
                 drive_link=result.drive_path,
                 elapsed=time() - start,
-                download_path=temp_dir,
+                download_path=Path(temp_dir),
                 speed_elapsed=result.elapsed,
                 resolution=self.get_resolution(result.file_path), frame_rate=self.get_frame_rate(result.file_path),
                 is_audio=is_audio
             )
         else:
-            if file_path and os.path.getsize(file_path) > self.max_file_size:
+            if file_path_obj and file_path_obj.stat().st_size > self.max_file_size:
                 try:
-                    drive_path = await self.drive.uploadToDrive(file_path)
+                    drive_path = await self.drive.uploadToDrive(file_path_obj)
                     logger.debug(f"Large file uploaded to Drive: {drive_path}")
                 except Exception as e:
                     logger.error(f"Failed to upload to Drive: {e}")
-                    raise FailedToUploadDrive(f"Failed to upload {file_path} to Drive: {e}")
+                    raise FailedToUploadDrive(f"Failed to upload {file_path_obj} to Drive: {e}")
 
         elapsed = time() - start
         return DownloadResult(
-            file_path=file_path if not drive_path else None,
+            file_path=file_path_obj if not drive_path else None,
             drive_link=drive_path,
             elapsed=elapsed, 
-            download_path=temp_dir, 
-            resolution=self.get_resolution(file_path), 
-            frame_rate=self.get_frame_rate(file_path),
+            download_path=Path(temp_dir), 
+            resolution=self.get_resolution(file_path_obj), 
+            frame_rate=self.get_frame_rate(file_path_obj),
             is_audio=is_audio
         )
 

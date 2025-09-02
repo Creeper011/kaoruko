@@ -5,15 +5,15 @@ import logging
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
-from src.application.config import SettingsManager
 
 logger = logging.getLogger(__name__)
 
 class Drive():
     """Google Drive Utils"""
     
-    def __init__(self, folder) -> None:
+    def __init__(self, folder, drive_path) -> None:
         self.folder = folder
+        self.drive_path = drive_path
         self.drive = None
         self._lock = asyncio.Lock()
     
@@ -27,16 +27,15 @@ class Drive():
     
     def _login_to_drive_sync(self):
         """Synchronous version of login to use with run_in_executor"""
-        drive_path = SettingsManager().get({'Drive': 'DrivePath'})
-        if os.path.exists(drive_path):
+        if os.path.exists(self.drive_path):
             try:
-                creds = service_account.Credentials.from_service_account_file(drive_path, scopes=["https://www.googleapis.com/auth/drive.file"])
+                creds = service_account.Credentials.from_service_account_file(self.drive_path, scopes=["https://www.googleapis.com/auth/drive.file"])
                 return build('drive', 'v3', credentials=creds)
             except Exception as e:
                 logger.error(f"Error loading Drive credentials: {e}")
                 raise FileNotFoundError(f"Invalid Drive credentials: {e}")
         else:
-            raise FileNotFoundError(f"DrivePath not found: {drive_path}")
+            raise FileNotFoundError(f"DrivePath not found: {self.drive_path}")
     
     async def _login_to_drive_async(self):
         """Async version of login"""

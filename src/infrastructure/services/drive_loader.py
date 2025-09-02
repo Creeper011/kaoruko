@@ -29,7 +29,12 @@ class DriveLoader(BaseDriveLoader):
                 if folder is None:
                     folder = self._settings.get({'Drive': 'default_folder'}) or "default"
                 
-                self._drive_instance = Drive(folder)
+                # Get drive_path from settings
+                drive_path = self._settings.get({'Drive': 'DrivePath'})
+                if not drive_path:
+                    raise RuntimeError("DrivePath not configured in settings")
+                
+                self._drive_instance = Drive(folder, drive_path)
                 logger.debug(f"Drive instance loaded successfully with folder: {folder}")
                 
             except Exception as e:
