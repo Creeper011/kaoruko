@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import discord
 import os
 from pathlib import Path
@@ -37,11 +38,11 @@ class DownloadCog(commands.Cog):
             app_commands.Choice(name="ogg", value="ogg"),
         ],
         quality=[
-            app_commands.Choice(name="1440p / 320 kbps", value="[height=1440]_[abr=320]"),
-            app_commands.Choice(name="1080p / 320 kbps", value="[height=1080]_[abr=320]"),
-            app_commands.Choice(name="720p / 128 kbps", value="[height=720]_[abr=128]"),
-            app_commands.Choice(name="480p / 64 kbps", value="[height=480]_[abr=64]"),
-            app_commands.Choice(name="360p / 48 kbps", value="[height=360]_[abr=48]"),
+            app_commands.Choice(name="1440p / 320 kbps", value="[height<=1440]_[abr<=320]"),
+            app_commands.Choice(name="1080p / 320 kbps", value="[height<=1080]_[abr<=320]"),
+            app_commands.Choice(name="720p / 128 kbps", value="[height<=720]_[abr<=128]"),
+            app_commands.Choice(name="480p / 64 kbps", value="[height<=480]_[abr<=64]"),
+            app_commands.Choice(name="360p / 48 kbps", value="[height<=360]_[abr<=48]"),
         ]
     )
     @app_commands.describe(
@@ -71,11 +72,11 @@ class DownloadCog(commands.Cog):
             url=url,
             format=format,
             quality=quality,
-            file_limit=interaction.guild.filesize_limit if interaction.guild else 120 * 1024 * 1024
+            file_limit=interaction.guild.filesize_limit if interaction.guild.filesize_limit >= 25 * 1024 * 1024 else 120 * 1024 * 1024
         )
 
         usecase = self.builder.build_download_usecase()
-
+        start_time = time.time()
         download_result = None
 
         try:
@@ -85,12 +86,21 @@ class DownloadCog(commands.Cog):
             )
 
             download_result = await usecase.execute(request)
+            total_elapsed = time.time() - start_time
+            total_elapsed = f"{total_elapsed:.2f}s"
+
+            logger.debug(f"Total time in this process is: {total_elapsed}")
 
             if download_result.drive_link:
                 logger.debug(f"File uploaded to Drive successfully: {download_result.drive_link}")
                 elapsed = f"{download_result.elapsed:.2f}s"
+                filesize = f"{download_result.filesize / (1024*1024):.2f}MB"
+                video_message = (
+                    f"Resolution: {download_result.resolution}, Frame Rate: {download_result.frame_rate:.2f}fps"
+                    if not download_result.is_audio else ""
+                )
                 await interaction.followup.send(
-                    content=f"Download Completed! Elapsed: {elapsed}\nLink: {download_result.drive_link}"
+                    content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}\nLink: {download_result.drive_link}"
                 )
             else:
                 logger.debug(f"File downloaded successfully: {download_result.file_path}")
@@ -100,14 +110,14 @@ class DownloadCog(commands.Cog):
                 await interaction.followup.send("Sending file...")
 
                 elapsed = f"{download_result.elapsed:.2f}s"
-                filesize = f"{os.path.getsize(download_result.file_path) / (1024*1024):.2f}MB"
+                filesize = f"{download_result.filesize / (1024*1024):.2f}MB"
                 video_message = (
                     f"Resolution: {download_result.resolution}, Frame Rate: {download_result.frame_rate:.2f}fps"
                     if not download_result.is_audio else ""
                 )
 
                 await interaction.edit_original_response(
-                    content=f"Download Completed! Elapsed: {elapsed}, Filesize: {filesize}\n{video_message}",
+                    content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}",
                     attachments=[file]
                 )
 
