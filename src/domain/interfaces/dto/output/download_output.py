@@ -1,14 +1,14 @@
-
 from dataclasses import dataclass
 from pathlib import Path
 
 @dataclass
-class DownloadResult():
+class DownloadOutput():
     file_path: Path = None
     drive_link: str = None
     elapsed: float = None
-    download_path: Path = None
-    speed_elapsed: float = None
     resolution: str = None
     frame_rate: float = None
     is_audio: bool = None
+    speed_output: object = None
+    cleanup: callable = None
+    cleanup_speed_included: bool = False

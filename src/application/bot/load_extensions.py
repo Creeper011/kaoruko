@@ -38,10 +38,10 @@ class ExtensionLoader():
                     cog_path = f"{self.extensions_path}.{mod_path}"                     
                     if cog_path in self.bot.extensions:
                         continue
-                    try:
-                        start = time.perf_counter()
-                        await self.bot.load_extension(cog_path)
-                        elapsed = time.perf_counter() - start
-                        logger.debug(f"Cog {cog_path} loaded in {elapsed:.3f} seconds")
-                    except Exception as e:
-                        logger.error(f"Error loading cog {cog_path}: {e}")
+                    #try:
+                    start = time.perf_counter()
+                    await self.bot.load_extension(cog_path)
+                    elapsed = time.perf_counter() - start
+                    logger.debug(f"Cog {cog_path} loaded in {elapsed:.3f} seconds")
+                    #except Exception as e:
+                    #    logger.error(f"Error loading cog {cog_path}: {e}")

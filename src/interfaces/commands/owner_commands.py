@@ -9,15 +9,14 @@ class OwnerCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
     
-    @app_commands.command(name="cleanup_drive", description="Cleanup all files from drive")
-    async def cleanup_drive(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking=True)
+    @commands.command(name="cleanup_drive")
+    async def cleanup_drive(self, context: commands.Context):
         drive = DriveLoader().get_drive()
         try: 
             await drive.deleteAllFiles()
-            await interaction.followup.send("Drive cleaned up")
+            await context.send("Drive cleaned up")
         except Exception as e:
-            await interaction.followup.send(embed=create_error(error=str(e), type=ErrorTypes.UNKNOWN))
+            await context.send(embed=create_error(error=str(e), type=ErrorTypes.UNKNOWN))
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OwnerCommands(bot))

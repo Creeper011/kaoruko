@@ -1,0 +1,3 @@
+
+class FailedToUploadDrive(Exception):
+    pass
