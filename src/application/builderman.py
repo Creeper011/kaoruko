@@ -4,19 +4,14 @@ from src.domain.usecases import (
 #    SpeedMedia,
 #    MediaAudioExtractor
 )
-from src.infrastructure.services import (
-    Downloader,
-#    AudioCrusher,
-#    AudioSpeedService,
-#    VideoSpeedService,
-)
+from src.infrastructure.orchestrators.downloader import DownloadOrchestrator
 
 class BuilderMan():
     """Manages building processes for usecases"""
 
     @staticmethod
     def build_download_usecase() -> DownloadUsecase:
-        return DownloadUsecase(Downloader)
+        return DownloadUsecase(DownloadOrchestrator)
 
 #   @staticmethod
 #    def build_bit_crusher_usecase() -> BitCrusherUsecase:

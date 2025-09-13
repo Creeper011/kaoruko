@@ -3,7 +3,7 @@ from src.domain.interfaces.dto.output.download_output import DownloadOutput
 
 @runtime_checkable
 class DownloadProtocol(Protocol):
-    def __init__(self, url: str, format: str, quality: Optional[str] = None):
+    def __init__(self, url: str, format: str, quality: Optional[str] = None, file_limit: Optional[int] = None):
         ...
         
     async def __aenter__(self) -> "DownloadProtocol":

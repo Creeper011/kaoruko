@@ -1,8 +1,21 @@
-from .download.download_exceptions import (MediaFilepathNotFound, InvalidDownloadRequest)
+from .download.download_exceptions import (
+    MediaFilepathNotFound, 
+    InvalidDownloadRequest,
+    DownloadFailed,
+    UnsupportedFormat,
+    FileTooLarge,
+    NetworkError,
+    DriveUploadFailed
+)
 from .general.general_exceptions import FailedToUploadDrive
 
 all = [
     MediaFilepathNotFound,
     FailedToUploadDrive,
-    InvalidDownloadRequest  
+    InvalidDownloadRequest,
+    DownloadFailed,
+    UnsupportedFormat,
+    FileTooLarge,
+    NetworkError,
+    DriveUploadFailed
 ]

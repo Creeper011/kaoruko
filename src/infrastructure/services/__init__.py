@@ -1,4 +1,4 @@
 from .drive.drive_loader import DriveLoader
-from .downloader import Downloader
+from .downloader.yt_dlp_download import YtDlpDownloader
 
-__all__ = ['DriveLoader', 'Downloader']
+__all__ = ['DriveLoader', 'YtDlpDownloader']

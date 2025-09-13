@@ -10,6 +10,15 @@ from src.application.builderman import BuilderMan
 from src.application.utils.error_embed import create_error
 from src.application.constants import ErrorTypes
 from src.domain.interfaces.dto.request.download_request import DownloadRequest
+from src.domain.exceptions import (
+    InvalidDownloadRequest,
+    MediaFilepathNotFound,
+    DownloadFailed,
+    UnsupportedFormat,
+    FileTooLarge,
+    NetworkError,
+    DriveUploadFailed
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +70,8 @@ class DownloadCog(commands.Cog):
         request = DownloadRequest(
             url=url,
             format=format,
-            quality=quality
+            quality=quality,
+            file_limit=interaction.guild.filesize_limit if interaction.guild else 120 * 1024 * 1024
         )
 
         usecase = self.builder.build_download_usecase()
@@ -101,12 +111,74 @@ class DownloadCog(commands.Cog):
                     attachments=[file]
                 )
 
-        except Exception as error:
-            logger.error(f"An unknown error occurred while downloading: {error}", exc_info=True)
+        except InvalidDownloadRequest as e:
+            logger.warning(f"Invalid download request: {e}")
             await interaction.followup.send(
                 embed=create_error(
-                    error="An unknown error occurred while processing your request.",
+                    error="Invalid download request.",
+                    type=ErrorTypes.INVALID_INPUT,
+                    note="Please check your URL and make sure it's valid.",
+                    code=str(e)
+                )
+            )
+        
+        except MediaFilepathNotFound as e:
+            logger.error(f"Downloaded file not found: {e}")
+            await interaction.followup.send(
+                embed=create_error(
+                    error="Download completed but file was not found.",
+                    type=ErrorTypes.FILE_NOT_FOUND,
+                    note="This might be a temporary issue. Please try again."
+                )
+            )
+        
+        except FileTooLarge as e:
+            logger.warning(f"File too large: {e}")
+            await interaction.followup.send(
+                embed=create_error(
+                    error="File is too large to upload directly.",
+                    type=ErrorTypes.FILE_TOO_LARGE,
+                    note="The file will be uploaded to Google Drive instead."
+                )
+            )
+        
+        except DriveUploadFailed as e:
+            logger.error(f"Drive upload failed: {e}")
+            await interaction.followup.send(
+                embed=create_error(
+                    error="Failed to upload to Google Drive.",
                     type=ErrorTypes.UNKNOWN,
+                    note="The file was downloaded but couldn't be uploaded to Drive. Please try again."
+                )
+            )
+        
+        except NetworkError as e:
+            logger.error(f"Network error: {e}")
+            await interaction.followup.send(
+                embed=create_error(
+                    error="Network connection error.",
+                    type=ErrorTypes.UNKNOWN,
+                    note="Please check your internet connection and try again."
+                )
+            )
+        
+        except UnsupportedFormat as e:
+            logger.warning(f"Unsupported format: {e}")
+            await interaction.followup.send(
+                embed=create_error(
+                    error="Unsupported format requested.",
+                    type=ErrorTypes.INVALID_FILE_TYPE,
+                    note="Please try a different format (mp4, mp3, mkv, webm, ogg)."
+                )
+            )
+        
+        except Exception as error:
+            logger.error(f"Unexpected error occurred while downloading: {error}", exc_info=True)
+            await interaction.followup.send(
+                embed=create_error(
+                    error="An unexpected error occurred while processing your request.",
+                    type=ErrorTypes.UNKNOWN,
+                    note="Please try again later or contact support if the issue persists.",
                     code=str(error)
                 )
             )
