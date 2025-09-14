@@ -124,20 +124,3 @@ class MediaInfoExtractor:
             logger.warning(f"Failed to get file size for {filepath}: {e}")
             logger.debug(f"File size extraction error details: {type(e).__name__}: {e}")
             return 0
-
-    @staticmethod
-    def get_file_size_mb(filepath: Path) -> float:
-        """
-        Get the file size in megabytes.
-
-        Args:
-            filepath (Path): Path to the file.
-
-        Returns:
-            float: File size in MB (rounded to 2 decimals).
-        """
-        logger.debug(f"Getting file size in MB for: {filepath}")
-        size_bytes = MediaInfoExtractor.get_file_size(filepath)
-        size_mb = round(size_bytes / (1024 * 1024), 2)
-        logger.debug(f"File size in MB: {size_mb}")
-        return size_mb

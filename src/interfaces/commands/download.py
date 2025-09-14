@@ -73,7 +73,10 @@ class DownloadCog(commands.Cog):
             quality=quality,
         )
         if interaction.is_guild_integration():
-            request.file_limit=interaction.guild.filesize_limit if interaction.guild.filesize_limit >= 25 * 1024 * 1024 else 120 * 1024 * 1024
+            if interaction.guild.filesize_limit <= 25 * 1024 * 1024:
+                request.file_limit = 120 * 1024 * 1024 
+            else:
+                request.file_limit = interaction.guild.filesize_limit
         else:
             request.file_limit = None
             
@@ -83,8 +86,7 @@ class DownloadCog(commands.Cog):
 
         try:
             logger.debug(
-                f"Starting download: {url}, Format: {format}, Quality: {quality}, "
-                #f"Speed: {speed}, Preserve Pitch: {preserve_pitch}"
+                f"Starting download: {url}, Format: {format}, Quality: {quality} | User name: {interaction.user.name}, User id: {interaction.user.id}"
             )
 
             download_result = await usecase.execute(request)

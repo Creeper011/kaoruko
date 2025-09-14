@@ -11,7 +11,6 @@ from src.domain.exceptions import (
     DownloadFailed,
     MediaFilepathNotFound,
     UnsupportedFormat,
-    NetworkError
 )
 
 logger = logging.getLogger(__name__)
