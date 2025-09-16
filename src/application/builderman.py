@@ -1,10 +1,14 @@
 from src.domain.usecases import (
     DownloadUsecase,
+    ShipUsecase
 #    BitCrusherUsecase,
 #    SpeedMedia,
 #    MediaAudioExtractor
 )
-from src.infrastructure.orchestrators.downloader import DownloadOrchestrator
+from src.infrastructure.orchestrators import (
+    DownloadOrchestrator,
+    ShipOrchestrator
+)
 
 class BuilderMan():
     """Manages building processes for usecases"""
@@ -13,6 +17,10 @@ class BuilderMan():
     def build_download_usecase() -> DownloadUsecase:
         return DownloadUsecase(DownloadOrchestrator)
 
+    @staticmethod
+    def build_ship_usecase() -> ShipUsecase:
+        return ShipUsecase(ShipOrchestrator)
+    
 #   @staticmethod
 #    def build_bit_crusher_usecase() -> BitCrusherUsecase:
 #        return BitCrusherUsecase(AudioCrusher())
