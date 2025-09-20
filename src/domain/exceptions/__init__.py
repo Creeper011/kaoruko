@@ -8,6 +8,7 @@ from .download.download_exceptions import (
     DriveUploadFailed
 )
 from .general.general_exceptions import FailedToUploadDrive
+from .extract_audio_exceptions import InvalidExtractAudioRequest
 
 all = [
     MediaFilepathNotFound,
@@ -17,5 +18,6 @@ all = [
     UnsupportedFormat,
     FileTooLarge,
     NetworkError,
-    DriveUploadFailed
+    DriveUploadFailed,
+    InvalidExtractAudioRequest
 ]

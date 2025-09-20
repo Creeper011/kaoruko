@@ -100,7 +100,6 @@ class DownloadOrchestrator:
             filesize=file_size,
             is_audio=is_audio,
             cleanup=self.downloader.cleanup,
-            cleanup_speed_included=False,
             frame_rate=frame_rate,
             resolution=resolution
         )

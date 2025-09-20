@@ -1,13 +1,12 @@
 from src.domain.usecases import (
     DownloadUsecase,
-    ShipUsecase
-#    BitCrusherUsecase,
-#    SpeedMedia,
-#    MediaAudioExtractor
+    ExtractAudioUsecase
 )
 from src.infrastructure.orchestrators import (
     DownloadOrchestrator,
-    ShipOrchestrator
+)
+from src.infrastructure.services import (
+    AudioExtractService,
 )
 
 class BuilderMan():
@@ -18,17 +17,5 @@ class BuilderMan():
         return DownloadUsecase(DownloadOrchestrator)
 
     @staticmethod
-    def build_ship_usecase() -> ShipUsecase:
-        return ShipUsecase(ShipOrchestrator)
-    
-#   @staticmethod
-#    def build_bit_crusher_usecase() -> BitCrusherUsecase:
-#        return BitCrusherUsecase(AudioCrusher())
-
-#    @staticmethod
-#    def build_speed_media_usecase() -> SpeedMedia:
-#        return SpeedMedia(AudioSpeedService(), VideoSpeedService())
-
-#    @staticmethod
-#    def build_media_audio_extractor() -> MediaAudioExtractor:
-#        return MediaAudioExtractor()
+    def build_extract_audio_usecase() -> ExtractAudioUsecase:
+        return ExtractAudioUsecase(AudioExtractService)

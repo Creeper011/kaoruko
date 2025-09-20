@@ -10,6 +10,6 @@ class DownloadOutput():
     resolution: str = None
     frame_rate: float = None
     is_audio: bool = None
-    speed_output: object = None
+    #speed_output: object = None
     cleanup: callable = None
-    cleanup_speed_included: bool = False
+    #cleanup_speed_included: bool = False
