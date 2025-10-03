@@ -27,6 +27,28 @@ class DownloadCog(commands.Cog):
         self.bot = bot
         self.builder = BuilderMan()
 
+    def _build_verbose_info(self, download_result):
+        """Monta string com informações extras do modo verbose."""
+        if not download_result.extra_info:
+            return ""
+        info = download_result.extra_info
+        media_fields = [
+            ('video_codec', "Codec", ""),
+            ('duration', "Duration", "s"),
+            ('bitrate', "Bitrate", " kbps"),
+            ('audio_codec', "Audio Codec", ""),
+            ('audio_sample_rate', "Audio Sample Rate", " Hz"),
+            ('audio_channels', "Audio Channels", "")
+        ]
+        parts = []
+        for key, label, suffix in media_fields:
+            if key == 'video_codec' and download_result.is_audio:
+                continue
+            formatted = self.format_media_info(info, key, label, suffix)
+            if formatted:
+                parts.append(formatted)
+        return ", ".join(parts)
+
     @app_commands.command(name="download", description="Download from multiple sites")
     @app_commands.choices(
         format=[
@@ -49,7 +71,8 @@ class DownloadCog(commands.Cog):
         format="The format to download",
         invisible="If True, only you will see the result (ephemeral message)",
         quality="The quality to download",
-        should_transcode="Force transcoding even if not strictly necessary (may take longer) if true rather than remuxing when possible"
+        should_transcode="Force transcoding even if not strictly necessary (may take longer) if true rather than remuxing when possible",
+        verbose="If true, show more detailed info about the output media file"
     )
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -61,6 +84,7 @@ class DownloadCog(commands.Cog):
         quality: app_commands.Choice[str] = None,
         invisible: bool = False,
         should_transcode: bool = False,
+        verbose: bool = False
     ):
         await interaction.response.defer(thinking=True, ephemeral=invisible)
 
@@ -74,7 +98,8 @@ class DownloadCog(commands.Cog):
             url=url,
             format=format,
             quality=quality,
-            should_transcode=should_transcode
+            should_transcode=should_transcode,
+            verbose=verbose
         )
         if interaction.is_guild_integration():
             if interaction.guild.filesize_limit <= 25 * 1024 * 1024:
@@ -107,6 +132,12 @@ class DownloadCog(commands.Cog):
                     f"Resolution: {download_result.resolution}, Frame Rate: {download_result.frame_rate:.2f}fps"
                     if not download_result.is_audio else ""
                 )
+
+                if verbose:
+                    verbose_info = self._build_verbose_info(download_result)
+                    if verbose_info:
+                        video_message += f"\n{verbose_info}"
+
                 await interaction.followup.send(
                     content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}\nLink: {download_result.drive_link}"
                 )
@@ -123,6 +154,11 @@ class DownloadCog(commands.Cog):
                     f"Resolution: {download_result.resolution}, Frame Rate: {download_result.frame_rate:.2f}fps"
                     if not download_result.is_audio else ""
                 )
+
+                if verbose:
+                    verbose_info = self._build_verbose_info(download_result)
+                    if verbose_info:
+                        video_message += verbose_info
 
                 await interaction.edit_original_response(
                     content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}",
@@ -234,6 +270,17 @@ class DownloadCog(commands.Cog):
                 await self._cleanup(download_result)
             else:
                 logger.debug("No download result to clean up.")
+
+    def format_media_info(self, extra_info, key, label, suffix=""):
+        """Return formatted media info if available."""
+        value = extra_info.get(key)
+        if value is not None:
+            if key == 'duration':
+                formatted_value = f"{value:.2f}"
+            else:
+                formatted_value = value
+            return f"{label}: {formatted_value}{suffix}"
+        return ""
 
     async def _cleanup(self, download_result):
         """Clean up resources after download."""

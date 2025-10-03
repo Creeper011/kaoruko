@@ -41,7 +41,7 @@ class DownloadUsecase:
             raise InvalidDownloadRequest()
 
         async with self.service(request.url, request.format, request.quality, request.file_limit,
-                                request.should_transcode) as service:
+                                request.should_transcode, request.verbose) as service:
             output = await service.get_response()
 
         return output
