@@ -132,14 +132,15 @@ class DownloadCog(commands.Cog):
                     f"Resolution: {download_result.resolution}, Frame Rate: {download_result.frame_rate:.2f}fps"
                     if not download_result.is_audio else ""
                 )
+                extra_info_message = ""
 
                 if verbose:
                     verbose_info = self._build_verbose_info(download_result)
                     if verbose_info:
-                        video_message += f"\n{verbose_info}"
+                        extra_info_message += f"{verbose_info}"
 
                 await interaction.followup.send(
-                    content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}\nLink: {download_result.drive_link}"
+                    content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}\n{extra_info_message}\nLink: {download_result.drive_link}"
                 )
             else:
                 logger.debug(f"File downloaded successfully: {download_result.file_path}")
@@ -154,14 +155,15 @@ class DownloadCog(commands.Cog):
                     f"Resolution: {download_result.resolution}, Frame Rate: {download_result.frame_rate:.2f}fps"
                     if not download_result.is_audio else ""
                 )
+                extra_info_message = ""
 
                 if verbose:
                     verbose_info = self._build_verbose_info(download_result)
                     if verbose_info:
-                        video_message += f"\n{verbose_info}"
+                        extra_info_message += f"{verbose_info}"
 
                 await interaction.edit_original_response(
-                    content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}",
+                    content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}\n{extra_info_message}",
                     attachments=[file]
                 )
 
