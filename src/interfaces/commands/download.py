@@ -158,7 +158,7 @@ class DownloadCog(commands.Cog):
                 if verbose:
                     verbose_info = self._build_verbose_info(download_result)
                     if verbose_info:
-                        video_message += verbose_info
+                        video_message += f"\n{verbose_info}"
 
                 await interaction.edit_original_response(
                     content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}",
