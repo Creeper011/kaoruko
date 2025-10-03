@@ -1,5 +1,4 @@
 import time
-import validators
 import yt_dlp
 import logging
 import uuid
@@ -20,13 +19,15 @@ DEFAULT_YT_DLP_SETTINGS = {
     'postprocessors': [],
     'restrictfilenames': True,
     'noplaylist': True,
-    'quiet': True,
     'no_warnings': True,
     'concurrent_fragment_downloads': 10,
     'continue_dl': True,
     'external_downloader': 'aria2c',
     'external_downloader_args': {'default': ['-x', '16', '-s', '16', '-k', '1M']},
     'match_filter': yt_dlp.utils.match_filter_func("!is_live"),
+    'extractor_args': {
+        #'youtubepot-bgutilhttp': 'base_url=http://127.0.0.1:4416'
+    },
 }
 
 class YtDlpDownloader:
@@ -35,45 +36,49 @@ class YtDlpDownloader:
     Returns primitive data only - no metadata extraction or complex processing.
     """
 
-    FORMAT_MAP = {
-        "mp4": {
-            "format": "bestvideo{video_quality}[ext=mp4]+bestaudio{audio_quality}[ext=m4a]/bestvideo{video_quality}+bestaudio{audio_quality}/bestvideo[ext=mp4]+bestaudio/bestvideo+bestaudio",
-            "post": [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}],
-            "is_audio": False
-        },
-        "mp3": {
-            "format": "bestaudio{audio_quality}/bestaudio",
-            "post": [{'key': 'FFmpegExtractAudio', 'preferredcodec': "mp3", 'preferredquality': '0'}],
-            "is_audio": True
-        },
-        "mkv": {
-            "format": "bestvideo{video_quality}+bestaudio{audio_quality}",
-            "post": [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mkv"}],
-            "is_audio": False
-        },
-        "webm": {
-            "format": "bestvideo{video_quality}[ext=webm]+bestaudio{audio_quality}[ext=webm]/bestvideo{video_quality}+bestaudio{audio_quality}/bestvideo[ext=webm]+bestaudio/bestvideo+bestaudio",
-            "post": [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "webm"}],
-            "is_audio": False
-        },
-        "ogg": {
-            "format": "bestaudio{audio_quality}/bestaudio",
-            "post": [{'key': 'FFmpegExtractAudio', 'preferredcodec': "vorbis", 'preferredquality': '0'}],
-            "is_audio": True
-        }
-    }
-    
-    def __init__(self, url: str, format: str, quality: Optional[str] = None):
+    def __init__(self, url: str, format: str, quality: Optional[str] = None, should_transcode: bool = False):
         """Initialize downloader with URL, format, and optional quality."""
-        logger.debug(f"Initializing YtDlpDownloader with url={url}, format={format}, quality={quality}")
+        logger.debug(f"Initializing YtDlpDownloader with url={url}, format={format}, quality={quality}, should_transcode={should_transcode}")
         self.url = url
         self.format = format.lower()
         self.quality = quality
+        self.should_transcode = should_transcode
         self.is_audio = False
+
+        self.FORMAT_MAP = {
+            "mp4": {
+                "format": "bestvideo{video_quality}+bestaudio{audio_quality}/bestvideo{video_quality}+bestaudio{audio_quality}/bestvideo+bestaudio/best",
+                "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "mp4"} if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}],
+                "is_audio": False
+            },
+            "mp3": {
+                "format": "bestaudio{audio_quality}/bestaudio",
+                "post": [{'key': 'FFmpegExtractAudio', 'preferredcodec': "mp3", 'preferredquality': '0'}],
+                "is_audio": True
+            },
+            "mkv": {
+                "format": "bestvideo{video_quality}+bestaudio{audio_quality}",
+                "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "mkv"} if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "mkv"}],
+                "is_audio": False
+            },
+            "webm": {
+                "format": "bestvideo{video_quality}[ext=webm]+bestaudio{audio_quality}[ext=webm]/bestvideo{video_quality}+bestaudio{audio_quality}/bestvideo[ext=webm]+bestaudio/bestvideo+bestaudio",
+                "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "webm"} if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "webm"}],
+                "is_audio": False
+            },
+            "ogg": {
+                "format": "bestaudio{audio_quality}/bestaudio",
+                "post": [{'key': 'FFmpegExtractAudio', 'preferredcodec': "vorbis", 'preferredquality': '0'}],
+                "is_audio": True
+            }
+        }
+
         self.session_id = str(uuid.uuid4())
         logger.debug(f"Generated session ID: {self.session_id}")
+
         self.temp_dir = self._create_temp_directory("temp/downloads")
         logger.debug(f"Created temp directory: {self.temp_dir}")
+
         self.downloaded_filepath: Optional[Path] = None
         self._download_task: Optional[asyncio.Future] = None
         self.start_time: Optional[float] = None
@@ -81,6 +86,20 @@ class YtDlpDownloader:
         self.yt_dlp_opts = DEFAULT_YT_DLP_SETTINGS.copy()
         self.yt_dlp_opts['outtmpl'] = str(Path(self.temp_dir) / "%(title)s.%(ext)s")
         logger.debug(f"yt-dlp output template: {self.yt_dlp_opts['outtmpl']}")
+
+        self._set_level_logging(logger.level)
+
+    def _set_level_logging(self, level: int):
+        """Set the logging level for yt_dlp. Quiet if level is not DEBUG."""
+        yt_logger = logging.getLogger('yt_dlp')
+        if level == logging.DEBUG:
+            yt_logger.setLevel(logging.DEBUG)
+            self.yt_dlp_opts['quiet'] = False
+            self.yt_dlp_opts['verbose'] = True
+        else:
+            self.yt_dlp_opts['quiet'] = True
+            self.yt_dlp_opts['verbose'] = False
+        self.yt_dlp_opts['logger'] = yt_logger
 
     async def download(self):
         """Download the media file using yt-dlp."""
@@ -151,7 +170,6 @@ class YtDlpDownloader:
         self.is_audio = self.FORMAT_MAP[ytdl_format]["is_audio"]
         logger.debug(f"Format template: {fmt_template}, is_audio: {self.is_audio}")
 
-        # Simple split by underscore
         video_quality, audio_quality = ("", "")
         if self.quality:
             parts = self.quality.split("_")

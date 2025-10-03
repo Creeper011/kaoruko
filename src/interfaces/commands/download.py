@@ -48,6 +48,8 @@ class DownloadCog(commands.Cog):
         url="A query or a url (Playlist not supported)",
         format="The format to download",
         invisible="If True, only you will see the result (ephemeral message)",
+        quality="The quality to download",
+        should_transcode="Force transcoding even if not strictly necessary (may take longer) if true rather than remuxing when possible"
     )
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -58,6 +60,7 @@ class DownloadCog(commands.Cog):
         format: app_commands.Choice[str] = "mp4",
         quality: app_commands.Choice[str] = None,
         invisible: bool = False,
+        should_transcode: bool = False,
     ):
         await interaction.response.defer(thinking=True, ephemeral=invisible)
 
@@ -71,6 +74,7 @@ class DownloadCog(commands.Cog):
             url=url,
             format=format,
             quality=quality,
+            should_transcode=should_transcode
         )
         if interaction.is_guild_integration():
             if interaction.guild.filesize_limit <= 25 * 1024 * 1024:
@@ -135,6 +139,10 @@ class DownloadCog(commands.Cog):
                     code=str(e)
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
         
         except MediaFilepathNotFound as e:
             logger.error(f"Downloaded file not found: {e}")
@@ -145,6 +153,10 @@ class DownloadCog(commands.Cog):
                     note="This might be a temporary issue. Please try again."
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
         
         except FileTooLarge as e:
             logger.warning(f"File too large: {e}")
@@ -155,6 +167,10 @@ class DownloadCog(commands.Cog):
                     note="The file will be uploaded to Google Drive instead."
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
         
         except DriveUploadFailed as e:
             logger.error(f"Drive upload failed: {e}")
@@ -165,6 +181,10 @@ class DownloadCog(commands.Cog):
                     note="The file was downloaded but couldn't be uploaded to Drive. Please try again."
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
         
         except NetworkError as e:
             logger.error(f"Network error: {e}")
@@ -175,6 +195,10 @@ class DownloadCog(commands.Cog):
                     note="Please check your internet connection and try again."
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
         
         except UnsupportedFormat as e:
             logger.warning(f"Unsupported format: {e}")
@@ -185,6 +209,10 @@ class DownloadCog(commands.Cog):
                     note="Please try a different format (mp4, mp3, mkv, webm, ogg)."
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
         
         except Exception as error:
             logger.error(f"Unexpected error occurred while downloading: {error}", exc_info=True)
@@ -196,15 +224,26 @@ class DownloadCog(commands.Cog):
                     code=str(error)
                 )
             )
+            if download_result:
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
 
         finally:
-            await asyncio.sleep(1)
             if download_result:
-                if callable(download_result.cleanup):
-                    if asyncio.iscoroutinefunction(download_result.cleanup):
-                        await download_result.cleanup()
-                    else:
-                        download_result.cleanup()
+                await self._cleanup(download_result)
+            else:
+                logger.debug("No download result to clean up.")
+
+    async def _cleanup(self, download_result):
+        """Clean up resources after download."""
+        await asyncio.sleep(1)
+        if download_result:
+            if callable(download_result.cleanup):
+                if asyncio.iscoroutinefunction(download_result.cleanup):
+                    await download_result.cleanup()
+                else:
+                    download_result.cleanup()
 
 async def setup(bot: commands.Bot):
     """Load the Download cog."""

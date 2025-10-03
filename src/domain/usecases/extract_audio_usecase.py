@@ -53,4 +53,3 @@ class ExtractAudioUsecase:
             output = await service.get_response()
 
         return output
-1
