@@ -17,10 +17,10 @@
 
 **Available:**
 - 🎥 Download videos in various formats  
+- 🎵 Extract audio from attachments by replying  
 
 **Planned (PLAN):**
 - ⏩ Control speed of videos or audios (with or without pitch preservation)  
-- 🎵 Extract audio from attachments by replying  
 - 🎹 Media player in voice  
 - 🤖 AI commands  
 - 🔊 Bitcrusher
