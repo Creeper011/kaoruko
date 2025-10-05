@@ -7,7 +7,6 @@ from pathlib import Path
 from discord.ext import commands
 from discord import app_commands
 
-from src.application.builderman import BuilderMan
 from src.application.utils.error_embed import create_error
 from src.application.constants import ErrorTypes
 from src.domain.interfaces.dto.request.download_request import DownloadRequest
@@ -17,7 +16,8 @@ from src.domain.exceptions import (
     UnsupportedFormat,
     FileTooLarge,
     NetworkError,
-    DriveUploadFailed
+    DriveUploadFailed,
+    BlacklistedSiteError
 )
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 class DownloadCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.builder = BuilderMan()
 
     def _build_verbose_info(self, download_result):
         """Monta string com informações extras do modo verbose."""
@@ -112,7 +111,7 @@ class DownloadCog(commands.Cog):
         else:
             request.file_limit = None
             
-        usecase = self.builder.build_download_usecase()
+        usecase = self.bot.container.build_download_usecase()
         start_time = time.time()
         download_result = None
 
@@ -169,6 +168,17 @@ class DownloadCog(commands.Cog):
                     content=f"Download Completed! Download Elapsed: {elapsed}, Total Elapsed: {total_elapsed}, Filesize: {filesize}\n{video_message}\n{extra_info_message}",
                     attachments=[file]
                 )
+        
+        except BlacklistedSiteError as e:
+            logger.warning(f"Download blocked by blacklist: {e}")
+            await interaction.followup.send(
+                embed=create_error(
+                    error="Blocked download from blacklisted site.",
+                    type=ErrorTypes.INVALID_INPUT,
+                    note="This site is not allowed.",
+                    code=str(e)
+                )
+            )
 
         except InvalidDownloadRequest as e:
             logger.warning(f"Invalid download request: {e}")

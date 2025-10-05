@@ -7,17 +7,18 @@ from .download.download_exceptions import (
     NetworkError,
     DriveUploadFailed
 )
-from .general.general_exceptions import FailedToUploadDrive
+from .general.general_exceptions import FailedToUploadDrive, BlacklistedSiteError
 from .extract_audio_exceptions import InvalidExtractAudioRequest
 
-all = [
-    MediaFilepathNotFound,
-    FailedToUploadDrive,
-    InvalidDownloadRequest,
-    DownloadFailed,
-    UnsupportedFormat,
-    FileTooLarge,
-    NetworkError,
-    DriveUploadFailed,
-    InvalidExtractAudioRequest
+__all__ = [
+    "MediaFilepathNotFound",
+    "FailedToUploadDrive",
+    "InvalidDownloadRequest",
+    "DownloadFailed",
+    "UnsupportedFormat",
+    "FileTooLarge",
+    "NetworkError",
+    "DriveUploadFailed",
+    "InvalidExtractAudioRequest",
+    "BlacklistedSiteError"
 ]

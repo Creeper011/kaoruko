@@ -7,6 +7,7 @@ from src.application.config.yaml_settings import YamlSettingsManager
 from src.application.config.env_settings import EnvSettings
 from src.application.config.logging_setup import LoggingSetup
 from src.application.bot.utils import identify
+from .service_provider_container import ServiceProviderContainer
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,9 @@ class Injector:
         settings = YamlSettingsManager(CONFIG_PATH_YAML)
         EnvSettings.load_env(ENV_PATH)
         logging = LoggingSetup(is_debug)
+        
+        container = ServiceProviderContainer(settings)
+
         intents = discord.Intents(**settings.get_section({"Bot": "intents"}))
         prefix = settings.get({"Bot": "prefix"})
         custom_status_name = settings.get({"Bot": "custom_status_name"})
@@ -43,5 +47,6 @@ class Injector:
             "prefix": prefix,
             "custom_status_name": custom_status_name,
             "status_presence": status_presence,
-            "mobile_identify": mobile_identify
+            "mobile_identify": mobile_identify,
+            "container": container
         }

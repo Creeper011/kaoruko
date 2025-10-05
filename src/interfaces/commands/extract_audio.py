@@ -3,7 +3,6 @@ import logging
 import discord
 from discord import app_commands
 from discord.ext import commands
-from src.application.builderman import BuilderMan
 from src.application.constants.error_types import ErrorTypes
 from src.application.utils.error_embed import create_error
 from src.domain.interfaces.dto.request.extract_audio_request import ExtractAudioRequest
@@ -14,7 +13,6 @@ logger = logging.getLogger(__name__)
 class ExtractAudioCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.builder = BuilderMan()
 
     async def _cleanup(self, audio_output):
         logger.debug("Starting cleanup process...")
@@ -42,7 +40,7 @@ class ExtractAudioCog(commands.Cog):
 
         audio_output = None
         try:
-            usecase = self.builder.build_extract_audio_usecase()
+            usecase = self.bot.container.build_extract_audio_usecase()
             logger.debug("ExtractAudioUsecase built successfully")
             request = ExtractAudioRequest(url=attachment.url,
                                           file_size=attachment.size)
@@ -98,7 +96,7 @@ class ExtractAudioCog(commands.Cog):
                 else:
                     attachment = ctx.message.attachments[0]
 
-                usecase = self.builder.build_extract_audio_usecase()
+                usecase = self.bot.container.build_extract_audio_usecase()
                 logger.debug("ExtractAudioUsecase built successfully")
                 request = ExtractAudioRequest(url=attachment.url, file_size=attachment.size)
                 if ctx.guild:
