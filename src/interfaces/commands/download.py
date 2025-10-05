@@ -72,7 +72,8 @@ class DownloadCog(commands.Cog):
         invisible="If True, only you will see the result (ephemeral message)",
         quality="The quality to download",
         verbose="If true, show more detailed info about the output media file",
-        spoiler="If true, mark the file as a spoiler"
+        spoiler="If true, mark the file as a spoiler",
+        fetch_metadata="If true, fetch metadata from Spotify for MP3 files (cover, artist, etc)"
     )
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -84,7 +85,8 @@ class DownloadCog(commands.Cog):
         quality: app_commands.Choice[str] = None,
         invisible: bool = False,
         spoiler: bool = False,
-        verbose: bool = False
+        verbose: bool = False,
+        fetch_metadata: bool = False
     ):
         await interaction.response.defer(thinking=True, ephemeral=invisible)
 
@@ -99,7 +101,8 @@ class DownloadCog(commands.Cog):
             format=format,
             quality=quality,
             should_transcode=False,
-            verbose=verbose
+            verbose=verbose,
+            fetch_metadata=fetch_metadata
         )
         if interaction.is_guild_integration():
             if interaction.guild.filesize_limit <= 25 * 1024 * 1024:

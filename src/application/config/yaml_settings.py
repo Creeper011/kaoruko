@@ -1,10 +1,8 @@
 import yaml
 from typing import Any
 from pathlib import Path
-from dotenv import load_dotenv
 
-
-class SettingsManager:
+class YamlSettingsManager:
     """
     Singleton that manages settings loaded from a YAML file.
     Allows access to nested keys using a dictionary structure.
@@ -31,31 +29,6 @@ class SettingsManager:
             yaml_config_path = Path(yaml_config_path)
             with open(yaml_config_path, 'r') as file:
                 self._config = yaml.safe_load(file)
-
-    def load_env(self, env_path: Path = Path(".env")) -> bool:
-        """
-        Loads environment variables from a .env file using dotenv.
-        
-        Args:
-            env_path (Path): Path to the .env file. Defaults to Path(".env")
-            
-        Returns:
-            bool: True if .env file was loaded successfully, False otherwise
-            
-        Raises:
-            FileNotFoundError: If the .env file doesn't exist
-        """
-        env_path = Path(env_path)
-        
-        if not env_path.exists():
-            raise FileNotFoundError(f"Environment file not found: {env_path}")
-        
-        loaded_env = load_dotenv(env_path)
-        
-        if not loaded_env:
-            raise RuntimeError(f"Failed to load environment file: {env_path}")
-        
-        return loaded_env
 
     def get(self, keys: dict) -> Any:
         """

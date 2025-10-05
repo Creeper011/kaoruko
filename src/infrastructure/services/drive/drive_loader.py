@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from src.infrastructure.services.drive.drive import Drive
 from src.infrastructure.services.drive.base_drive_loader import BaseDriveLoader
-from src.application.config import SettingsManager
+from src.application.config.yaml_settings import YamlSettingsManager
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ class DriveLoader(BaseDriveLoader):
     def __init__(self):
         logger.debug("Initializing DriveLoader")
         self._drive_instance: Optional[Drive] = None
-        self._settings = SettingsManager()
+        self._settings = YamlSettingsManager()
         logger.debug("DriveLoader initialized successfully")
     
     def load_drive(self, folder: Optional[str] = None) -> Drive:

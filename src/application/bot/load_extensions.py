@@ -2,14 +2,14 @@ import os
 import logging
 import time
 from discord.ext import commands
-from src.application.config.settings import SettingsManager
+from src.application.config.yaml_settings import YamlSettingsManager
 
 logger = logging.getLogger(__name__)
 
 class ExtensionLoader():
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.extensions_path = SettingsManager().get({"Bot": "extensions_path"})
+        self.extensions_path = YamlSettingsManager().get({"Bot": "extensions_path"})
         if not self.extensions_path:
             raise ValueError("No extensions path configured in settings.")
         self.root_path = os.path.join(*self.extensions_path.split("."))

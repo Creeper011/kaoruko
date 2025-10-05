@@ -7,6 +7,8 @@ from src.domain.interfaces.dto.output.download_output import DownloadOutput
 from src.infrastructure.services import YtDlpDownloader
 from src.infrastructure.services import MediaInfoExtractor
 from src.infrastructure.services import DriveLoader
+from src.infrastructure.services.spotify_metadata_service import SpotifyMetadataService
+from src.infrastructure.services.metadata_embedder_service import MetadataEmbedderService
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ class DownloadOrchestrator:
 
     def __init__(self, url: str, format: str, quality: Optional[str] = None, 
                  min_size_for_drive_upload: Optional[int] = None, should_transcode: bool = False,
-                 verbose: bool = False):
+                 verbose: bool = False, fetch_metadata: bool = False):
         """
         Initialize orchestrator with download parameters.
         
@@ -37,6 +39,7 @@ class DownloadOrchestrator:
         self.quality = quality
         self.min_size_for_drive_upload = min_size_for_drive_upload or 120 * 1024 * 1024
         self.verbose = verbose
+        self.fetch_metadata = fetch_metadata
         self.extra_info = {}
         logger.debug(f"File size limit set to: {self.min_size_for_drive_upload} bytes ({self.min_size_for_drive_upload / (1024*1024):.2f}MB)")
 
@@ -120,6 +123,39 @@ class DownloadOrchestrator:
             resolution, frame_rate = self._get_video_information()
         else:
             resolution, frame_rate = None, None
+
+        # Metadata fetching logic as requested
+        if self.fetch_metadata and self.format == 'mp3' and self.downloaded_file_path:
+            logger.info("Starting metadata fetch process...")
+            media_info = self.downloader.get_media_info()
+            query = self.downloaded_file_path.stem # Fallback query
+
+            if media_info:
+                # Construct a more intelligent query
+                track = media_info.get('track') or media_info.get('title')
+                artist = media_info.get('artist') or media_info.get('uploader') or media_info.get('channel')
+                if track and artist:
+                    query = f"{track} {artist}"
+                elif track:
+                    query = track
+            
+            logger.debug(f"Using query for Spotify search: '{query}'")
+            spotify_service = SpotifyMetadataService()
+            metadata_tuple = await spotify_service.fetch_track(track_name=query)
+
+            if metadata_tuple:
+                logger.debug("Metadata found, applying to file.")
+                metadata_dict, image_bytes = metadata_tuple
+                embedder_service = MetadataEmbedderService()
+                await embedder_service.apply_metadata(
+                    file_path=self.downloaded_file_path,
+                    metadata=metadata_dict,
+                    image_cover_art=image_bytes
+                )
+                # Recalculate file size after embedding metadata
+                file_size = MediaInfoExtractor.get_file_size(self.downloaded_file_path)
+            else:
+                logger.warning("No metadata found on Spotify.")
 
         self.drive_link = await self._handle_drive_upload(file_size)
         

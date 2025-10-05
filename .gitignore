@@ -4,3 +4,4 @@ googleindentify.json
 .venv/
 __pycache__/
 temp
+.cache

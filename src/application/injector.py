@@ -3,7 +3,9 @@ import logging
 import os
 from pathlib import Path
 from discord.gateway import DiscordWebSocket
-from src.application.config import SettingsManager, LoggingSetup
+from src.application.config.yaml_settings import YamlSettingsManager
+from src.application.config.env_settings import EnvSettings
+from src.application.config.logging_setup import LoggingSetup
 from src.application.bot.utils import identify
 
 logger = logging.getLogger(__name__)
@@ -13,8 +15,8 @@ class Injector:
 
     @staticmethod
     def inject(CONFIG_PATH_YAML: Path, ENV_PATH: Path, is_debug: bool):
-        settings = SettingsManager(CONFIG_PATH_YAML)
-        settings.load_env(ENV_PATH)
+        settings = YamlSettingsManager(CONFIG_PATH_YAML)
+        EnvSettings.load_env(ENV_PATH)
         logging = LoggingSetup(is_debug)
         intents = discord.Intents(**settings.get_section({"Bot": "intents"}))
         prefix = settings.get({"Bot": "prefix"})

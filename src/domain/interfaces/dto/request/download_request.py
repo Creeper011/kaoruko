@@ -8,3 +8,4 @@ class DownloadRequest:
     file_limit: int = 120 * 1024 * 1024
     should_transcode: bool = False
     verbose: bool = False
+    fetch_metadata: bool = False

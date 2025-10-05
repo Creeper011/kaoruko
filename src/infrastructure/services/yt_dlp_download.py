@@ -82,6 +82,7 @@ class YtDlpDownloader:
         self.downloaded_filepath: Optional[Path] = None
         self._download_task: Optional[asyncio.Future] = None
         self.start_time: Optional[float] = None
+        self.media_info: Optional[Dict[str, Any]] = None
 
         self.yt_dlp_opts = DEFAULT_YT_DLP_SETTINGS.copy()
         self.yt_dlp_opts['outtmpl'] = str(Path(self.temp_dir) / "%(title)s.%(ext)s")
@@ -126,6 +127,11 @@ class YtDlpDownloader:
         """Get whether the downloaded file is audio."""
         logger.debug(f"Is audio: {self.is_audio}")
         return self.is_audio
+
+    def get_media_info(self) -> Optional[Dict[str, Any]]:
+        """Get the full metadata dictionary from yt-dlp."""
+        logger.debug(f"Getting media info. Keys: {list(self.media_info.keys()) if self.media_info else 'None'}")
+        return self.media_info
 
     def cleanup(self):
         """Remove the temporary download directory."""
@@ -210,6 +216,7 @@ class YtDlpDownloader:
         logger.debug(f"Starting yt-dlp extraction for URL: {self.url}")
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(self.url, download=True)
+            self.media_info = info.copy()
             logger.debug(f"yt-dlp extraction completed, info keys: {list(info.keys()) if info else 'None'}")
             if "entries" in info and info["entries"]:
                 info = info["entries"][0]
