@@ -1,7 +1,8 @@
 discord:
-  prefix: "?ç"
+  prefix: "?ka"
   owner_id: discord owner id
   intents:
     guilds: true
     messages: true
     message_content: true
+  is_mobile: true

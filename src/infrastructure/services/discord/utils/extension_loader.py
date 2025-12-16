@@ -24,7 +24,7 @@ class ExtensionLoader:
     async def load_extensions(self) -> None:
         """Finds and loads all extensions, injecting dependencies."""
         self.logger.info("Starting to load extensions...")
-        cogs_to_load = self.extension_finder.find_extensions()
+        cogs_to_load = self.extension_finder.find_classes()
 
         for cog_class in cogs_to_load:
             try:
