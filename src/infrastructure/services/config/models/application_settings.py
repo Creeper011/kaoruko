@@ -5,6 +5,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class BotSettings():
     """All settings related to discord bot"""
+    prefix: Optional[str] = None
     token: Optional[str] = None
     intents: Optional[Intents] = None
 

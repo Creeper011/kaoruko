@@ -12,6 +12,7 @@ class SettingsMapper:
         """Maps discord configuration to BotSettings object."""
         try:
             bot_settings = BotSettings(
+                prefix=discord_config.get('prefix'),
                 token=discord_config.get('token'),
                 intents=discord_config.get('intents')
             )
