@@ -17,11 +17,14 @@ async def main() -> None:
 
         await application.run()
 
-    except Exception as exc:
+    except Exception as error:
         logger.critical(
             "A critical error occurred during application startup",
-            exc_info=exc,
+            exc_info=error,
         )
+    finally:
+        if application:
+            await application.shutdown()
 
 
 if __name__ == "__main__":

@@ -17,3 +17,8 @@ class Application():
         
         self.logger.info("Starting Discord bot...")
         await self.bot.start(token=self.settings.bot_settings.token)
+
+    async def shutdown(self) -> None:
+        self.logger.info("Starting shutdown process")
+        if self.bot:
+            await self.bot.close()
