@@ -13,7 +13,7 @@ class Application():
     async def run(self) -> None:
         """Runs the application"""
         if not self.bot or not self.settings:
-            raise RuntimeError("Application has not been built. Call build_async() before running.")
+            raise RuntimeError("Application has not been built. Call build() before running.")
         
         self.logger.info("Starting Discord bot...")
         await self.bot.start(token=self.settings.bot_settings.token)

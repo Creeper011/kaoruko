@@ -6,9 +6,6 @@ from src.bootstrap.application_builder import ApplicationBuilder
 
 async def main() -> None:
     """The main entry point for the application."""
-    # Logging is now configured inside ApplicationBuilder
-    logger = logging.getLogger(__name__)
-    logger.info("Starting application build...")
 
     try:
         builder = ApplicationBuilder()
