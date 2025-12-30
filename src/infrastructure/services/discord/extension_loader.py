@@ -2,7 +2,6 @@ import inspect
 from logging import Logger
 from typing import Any, Dict, Type, Iterable
 from discord.ext.commands import Bot, Cog
-from src.infrastructure.filesystem.module_finder import ModuleFinder
 
 class ExtensionLoader():
     """Class to load extensions (cogs) into the bot with dependency injection."""
