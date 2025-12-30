@@ -34,7 +34,7 @@ class ExtensionLoader():
                 self.logger.debug(f"Successfully loaded extension {cog_class.__name__}")
 
             except Exception as error:
-                self.logger.error(f"Failed to load extension {cog_class.__name___}': {error}", exc_info=True)
+                self.logger.error(f"Failed to load extension {cog_class.__name__}: {error}", exc_info=True)
 
         self.logger.info("Finished loading extensions.")
 
