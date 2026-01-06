@@ -47,7 +47,11 @@ class SettingsMapper:
         """Performs the mapping logic."""
 
         bot_settings = self._map_bot_settings(parsed_data)
-        app_settings = ApplicationSettings(bot_settings=bot_settings)
+        download_settings = self._map_download_settings(parsed_data)
+        app_settings = ApplicationSettings(
+            bot_settings=bot_settings,
+            download_settings=download_settings
+        )
         
         self.logger.info("ApplicationSettings mapped successfully")
         return app_settings
