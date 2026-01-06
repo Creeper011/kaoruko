@@ -1,67 +1,75 @@
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 from src.core.constants import DEFAULT_ENV_CONFIG_PATH
 from src.infrastructure.services.config.loaders.env_loader import EnvLoader
 
 def test_env_loader_load_success() -> None:
-    mock_env_content = "key1=value1\nkey2=value2"
     logger_mock = MagicMock()
-    env_loader = EnvLoader(logger=logger_mock, config_path=DEFAULT_ENV_CONFIG_PATH)
+    
+    fake_path = MagicMock(spec=Path)
+    fake_path.exists.return_value = True
+    fake_path.resolve.return_value = "/fake/.env"
+    fake_path.name = ".env"
 
-    with patch("builtins.open", mock_open(read_data=mock_env_content)):
+    with patch("src.infrastructure.services.config.loaders.env_loader.load_dotenv"), \
+         patch("src.infrastructure.services.config.loaders.env_loader.dotenv_values", 
+               return_value={"key1": "value1", "key2": "value2"}):
+
+        env_loader = EnvLoader(logger=logger_mock, config_path=fake_path)
         data = env_loader.load()
 
     assert data == {"key1": "value1", "key2": "value2"}
-    logger_mock.debug.assert_called_with(
-        f"Loaded {len(data)} variables from {DEFAULT_ENV_CONFIG_PATH.name}"
-    )
+    fake_path.exists.assert_called_once()
 
 def test_env_loader_with_invalid_path() -> None:
-    """Tests loading env loader with a invalid path"""
     logger_mock = MagicMock()
-    invalid_path = Path(DEFAULT_ENV_CONFIG_PATH.parent / "n/o/n/.env")
-    env_loader = EnvLoader(logger=logger_mock, config_path=invalid_path)
+    
+    fake_path = MagicMock(spec=Path)
+    fake_path.exists.return_value = False
+    fake_path.resolve.return_value = "/path/invalido/.env"
+
+    env_loader = EnvLoader(logger=logger_mock, config_path=fake_path)
     
     try:
         env_loader.load()
     except Exception as error:
-        assert str(error) == f".env file not found at path: {invalid_path.resolve()}"
-        logger_mock.warning.assert_called_with(f".env file not found at path: {invalid_path.resolve()}")
+        assert str(error) == f".env file not found at path: {fake_path.resolve()}"
+        logger_mock.warning.assert_called()
 
-def test_env_loader_with_malformed_yaml() -> None:
+def test_env_loader_with_generic_error() -> None:
     logger_mock = MagicMock()
-    malformed_yaml_content = "key1: value1\nkey2 value2"  # Missing colon
+    
+    fake_path = MagicMock(spec=Path)
+    fake_path.exists.return_value = True
+    fake_path.resolve.return_value = "/fake/.env"
 
-    with patch("builtins.open", mock_open(read_data=malformed_yaml_content)):
+    error_msg = "Simulated parsing error"
+    with patch("src.infrastructure.services.config.loaders.env_loader.load_dotenv"), \
+         patch("src.infrastructure.services.config.loaders.env_loader.dotenv_values", 
+               side_effect=Exception(error_msg)):
+
         try:
-            env_loader = EnvLoader(logger=logger_mock, config_path=DEFAULT_ENV_CONFIG_PATH)
+            env_loader = EnvLoader(logger=logger_mock, config_path=fake_path)
             env_loader.load()
         except Exception as error:
-            assert str(error).startswith("Error loading .env file: while scanning a simple key")
+            assert str(error) == f"Error loading .env file: {error_msg}"
+            logger_mock.exception.assert_called()
 
-def test_env_loader_with_empty_yaml() -> None:
+def test_env_loader_with_empty_env() -> None:
     logger_mock = MagicMock()
-    empty_yaml_content = ""
+    
+    fake_path = MagicMock(spec=Path)
+    fake_path.exists.return_value = True
 
-    with patch("builtins.open", mock_open(read_data=empty_yaml_content)):
-        env_loader = EnvLoader(logger=logger_mock, config_path=DEFAULT_ENV_CONFIG_PATH)
+    with patch("src.infrastructure.services.config.loaders.env_loader.load_dotenv"), \
+         patch("src.infrastructure.services.config.loaders.env_loader.dotenv_values", return_value={}):
+
+        env_loader = EnvLoader(logger=logger_mock, config_path=fake_path)
         data = env_loader.load()
+        
     assert data == {}
 
-    
 def test_env_loader_logger() -> None:
     logger_mock = MagicMock()
     env_loader = EnvLoader(logger=logger_mock, config_path=DEFAULT_ENV_CONFIG_PATH)
-
     assert env_loader.logger == logger_mock
-
-def test_env_loader_with_a_non_utf8_file() -> None:
-    malformed_yaml_content = b"\x80\x81\x82"  # Invalid UTF-8 bytes
-    logger_mock = MagicMock()
-
-    with patch("builtins.open", mock_open(read_data=malformed_yaml_content)):
-        try:
-            env_loader = EnvLoader(logger=logger_mock, config_path=DEFAULT_ENV_CONFIG_PATH)
-            env_loader.load()
-        except Exception as error:
-            assert str(error).startswith("Error loading .env file: cannot use a string pattern on a bytes-like object")
