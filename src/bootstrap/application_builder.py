@@ -1,6 +1,7 @@
 import logging
+from typing import cast
 
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, AutoShardedBot
 
 from src.bootstrap.models.application import Application
 from src.bootstrap.startup import (
@@ -20,7 +21,7 @@ class ApplicationBuilder:
 
     def __init__(self) -> None:
         self.settings: ApplicationSettings | None = None
-        self.bot: Bot | None = None
+        self.bot: BaseBot | None = None
         self.logger: logging.Logger | None = None
 
     def _configure_logging(self) -> None:
@@ -45,6 +46,9 @@ class ApplicationBuilder:
         if self.settings is None or not self.logger:
             raise RuntimeError("Settings and logger must be configured before Discord components.")
 
+        if self.settings.bot_settings is None:
+            raise RuntimeError("Bot settings must be configured.")
+
         self.logger.info("Building Discord bot")
 
         self.bot = BotFactory(
@@ -53,7 +57,7 @@ class ApplicationBuilder:
         ).create_bot(settings=self.settings.bot_settings)
 
         discord_startup = DiscordExtensionStartup(
-            bot=self.bot,
+            bot=cast(Bot, self.bot),
             logger=self.logger,
         )
 
@@ -76,7 +80,7 @@ class ApplicationBuilder:
         self.logger.info("Assembling application")
 
         return Application(
-            bot=self.bot,
+            bot=cast(AutoShardedBot, self.bot),
             settings=self.settings,
             logger=self.logger,
         )

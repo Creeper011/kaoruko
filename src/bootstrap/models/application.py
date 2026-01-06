@@ -1,5 +1,5 @@
 from logging import Logger
-from discord.ext.commands import Bot
+from discord.ext.commands import AutoShardedBot
 from src.core.constants import DEFAULT_DISCORD_RECONNECT
 from src.infrastructure.services.config.models.application_settings import ApplicationSettings
 from src.utils import AsciiArt
@@ -7,7 +7,7 @@ from src.utils import AsciiArt
 class Application():
     """Represents the entire application runtime"""
 
-    def __init__(self, bot: Bot, settings: ApplicationSettings, logger: Logger) -> None:
+    def __init__(self, bot: AutoShardedBot, settings: ApplicationSettings, logger: Logger) -> None:
         self.bot = bot
         self.settings = settings
         self.logger = logger

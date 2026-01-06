@@ -1,5 +1,6 @@
 from logging import Logger
 from discord.ext.commands import Cog, Bot
+from typing import Dict, Type, Any
 from src.core.constants import DEFAULT_COMMANDS_PATH
 from src.infrastructure.services.discord.extension_loader import ExtensionLoader
 from src.infrastructure.filesystem.module_finder import ModuleFinder
@@ -12,7 +13,7 @@ class DiscordExtensionStartup():
         self.bot = bot
         self.logger = logger
 
-    async def load_extensions(self, services: Services) -> None:
+    async def load_extensions(self, services: Dict[Type, Any]) -> None:
         module_finder = ModuleFinder(
             logger=self.logger,
             find_path=DEFAULT_COMMANDS_PATH,
