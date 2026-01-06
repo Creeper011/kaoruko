@@ -20,7 +20,14 @@ class Application():
         AsciiArt.print_ascii_art(self.logger)
         self.logger.info("Starting Discord bot...")
         try:
-            await self.bot.start(token=self.settings.bot_settings.token, reconnect=DEFAULT_DISCORD_RECONNECT)
+            if not self.settings.bot_settings:
+                raise ValueError("Bot settings are not configured in the application settings.")
+            
+            token = self.settings.bot_settings.token
+            if token is None:
+                raise ValueError("Discord token is not set in the application settings.")
+            
+            await self.bot.start(token=token, reconnect=DEFAULT_DISCORD_RECONNECT)
         except (TypeError, ValueError) as error:
             self.logger.critical("Could not start the application due the Discord Token is not valid. Make sure if you running the project in the correct root directory.",
             exc_info=error,

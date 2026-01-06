@@ -14,4 +14,24 @@ class DownloadCog(commands.Cog):
 
     @app_commands.command(name="download", description="Download a file from a URL")
     async def download(self, interaction: discord.Interaction, url: str) -> None:
-        ...
+        """Download command to download a file from a URL."""
+        await interaction.response.defer()
+        
+        download_request = DownloadRequest(
+            url=url,
+            file_size_limit=self.download_settings.file_size_limit,
+            #blacklist_sites=self.download_settings.blacklist_sites # to be implemented
+        )
+        
+        try:
+            download_output = await self.download_usecase.execute(download_request)
+            
+            if download_output.file_url:
+                await interaction.followup.send(f"File uploaded successfully: {download_output.file_url} (Size: {download_output.file_size} bytes)")
+            elif download_output.file_path:
+                await interaction.followup.send(file=discord.File(download_output.file_path), content=f"File downloaded successfully (Size: {download_output.file_size} bytes)")
+            else:
+                await interaction.followup.send("Download completed, but no file available.")
+        
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred during download: {str(e)}")

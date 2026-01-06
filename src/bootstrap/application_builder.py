@@ -52,6 +52,9 @@ class ApplicationBuilder:
         if self.settings.bot_settings is None:
             raise RuntimeError("Bot settings must be configured.")
 
+        if self.settings.download_settings is None:
+            raise RuntimeError("Download settings must be configured.")
+
         self.logger.info("Building Discord bot")
 
         self.bot = BotFactory(
