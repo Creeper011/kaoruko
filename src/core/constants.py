@@ -9,3 +9,6 @@ DEFAULT_LOADERS_PATH = Path("src/infrastructure/services/config/loaders")
 DEFAULT_COMMANDS_PATH = Path("src/presentation/discord/commands")
 DEFAULT_DISCORD_RECONNECT = True
 DEFAULT_DEBUG_FLAG = ("-d", "--debug")
+CACHE_DIR = Path(".cache")
+CACHE_INDEX_FILE = CACHE_DIR / "index.json"
+DEFAULT_TEMP_DIR = Path(".temp")

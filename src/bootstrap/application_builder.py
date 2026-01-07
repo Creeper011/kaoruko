@@ -15,9 +15,15 @@ from src.infrastructure.services.config.models import ApplicationSettings
 from src.infrastructure.services.discord import BaseBot
 from src.infrastructure.services.discord.factories.bot_factory import BotFactory
 from src.bootstrap.models.services import Services
-from src.domain.models.download_settings import DownloadSettings
 
+from src.domain.models.download_settings import DownloadSettings
 from src.application.usecases.download_usecase import DownloadUsecase
+from src.infrastructure.services.ytdlp.ytdlp_download_service import YtdlpDownloadService
+from src.infrastructure.services.temp_service import TempService
+from src.infrastructure.services.cache_service import CacheService
+
+from infrastructure.services.drive.google_drive_login_service import GoogleDriveLoginService
+from infrastructure.services.drive.google_drive_uploader_service import GoogleDriveUploaderService
 
 class ApplicationBuilder:
     """Builds the application and all its runtime dependencies."""
@@ -69,12 +75,13 @@ class ApplicationBuilder:
 
         # note: add a separeted services builder if needed, for now we construct services here directly
         typed_services = Services(
-            DownloadSettings=self.settings.download_settings,
             DownloadUsecase=DownloadUsecase(
-                download_service=None,  # to be implemented
-                temp_service=None,      # to be implemented
-                cache_service=None,     # to be implemented
-                storage_service=None,   # to be implemented
+                logger=self.logger,
+                blacklist_sites=self.settings.download_settings.blacklist_sites,
+                download_service=YtdlpDownloadService(logger=self.logger),
+                temp_service=TempService(logger=self.logger),
+                cache_service=CacheService(logger=self.logger),
+                storage_service=GoogleDriveUploaderService(logger=self.logger, login_service=GoogleDriveLoginService(logger=self.logger)),   # to be implemented
             ),
         )
 

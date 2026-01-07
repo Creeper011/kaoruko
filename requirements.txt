@@ -13,8 +13,9 @@ pluggy==1.6.0
 propcache==0.4.1
 Pygments==2.19.2
 pytest==9.0.1
-pytest-asyncio
+pytest-asyncio==1.3.0
 python-dotenv==1.2.1
 PyYAML==6.0.3
 typing_extensions==4.15.0
 yarl==1.22.0
+yt-dlp>=2025.12.8

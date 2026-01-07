@@ -1,16 +1,14 @@
 from discord.ext import commands
 import discord
 from src.application.usecases.download_usecase import DownloadUsecase
-from src.domain.models.download_settings import DownloadSettings    
 from src.application.dto.request.download_request import DownloadRequest
 from discord import app_commands
 class DownloadCog(commands.Cog):
     """Cog for download command."""
 
-    def __init__(self, bot: commands.Bot, download_usecase: DownloadUsecase, download_settings: DownloadSettings) -> None:
+    def __init__(self, bot: commands.Bot, download_usecase: DownloadUsecase) -> None:
         self.bot = bot
         self.download_usecase = download_usecase
-        self.download_settings = download_settings
 
     @app_commands.command(name="download", description="Download a file from a URL")
     async def download(self, interaction: discord.Interaction, url: str) -> None:
@@ -20,7 +18,6 @@ class DownloadCog(commands.Cog):
         download_request = DownloadRequest(
             url=url,
             file_size_limit=self.download_settings.file_size_limit,
-            #blacklist_sites=self.download_settings.blacklist_sites # to be implemented
         )
         
         try:

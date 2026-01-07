@@ -1,7 +1,10 @@
 from typing import Dict, Any
+from pathlib import Path
 from logging import Logger
 from src.infrastructure.services.config.models import ApplicationSettings, BotSettings
+from src.domain.models.drive_settings import DriveSettings
 from src.domain.models.download_settings import DownloadSettings   
+
 class SettingsMapper:
     """Maps a parsed configuration dictionary to a final ApplicationSettings object."""
     
@@ -42,15 +45,34 @@ class SettingsMapper:
         except Exception as e:
             self.logger.error(f"Failed to map DownloadSettings: {e}")
             raise
-
+    
+    def _map_drive_settings(self, parsed_data: Dict[str, Any]) -> DriveSettings:
+        """Maps drive configuration to DriveSettings object."""
+        try:
+            self.logger.debug(f"Full data received for drive settings mapping: {parsed_data}")
+            drive_config = parsed_data.get('drive', {})
+            
+            drive_settings = DriveSettings(
+                credentials_path=Path(drive_config.get('credentials_path')),
+                folder_id=drive_config.get('folder_id')
+            )
+            self.logger.debug("DriveSettings mapped successfully")
+            return drive_settings
+        except Exception as e:
+            self.logger.error(f"Failed to map DriveSettings: {e}")
+            raise
+        
     def map(self, parsed_data: Dict[str, Any]) -> ApplicationSettings:
         """Performs the mapping logic."""
 
         bot_settings = self._map_bot_settings(parsed_data)
         download_settings = self._map_download_settings(parsed_data)
+        drive_settings = self._map_drive_settings(parsed_data)
+
         app_settings = ApplicationSettings(
             bot_settings=bot_settings,
-            download_settings=download_settings
+            download_settings=download_settings,
+            drive_settings=drive_settings
         )
         
         self.logger.info("ApplicationSettings mapped successfully")

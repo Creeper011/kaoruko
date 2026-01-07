@@ -3,5 +3,4 @@ from src.infrastructure.services.config.models.application_settings import Downl
 from src.application.usecases.download_usecase import DownloadUsecase
 
 class Services(TypedDict):
-    DownloadSettings: DownloadSettings
     DownloadUsecase: DownloadUsecase
