@@ -6,8 +6,12 @@ from src.application.protocols.storage_service_protocol import StorageServicePro
 from src.application.protocols.url_validator_protocol import URLValidatorProtocol
 from src.application.dto.request.download_request import DownloadRequest
 from src.application.dto.output.download_output import DownloadOutput
-from src.domain.exceptions.download_exceptions import DownloadFailed
-from src.domain.exceptions.storage_exceptions import StorageError
+from src.domain.exceptions import (
+    DownloadFailed,
+    BlacklistException,
+    UrlException,
+    StorageError,
+)
 
 
 class DownloadUsecase():
@@ -36,11 +40,11 @@ class DownloadUsecase():
         self.logger.debug("Checking URL validity...")
         if not self.url_validator.is_valid(request.url):
             self.logger.warning(f"Invalid URL provided: {request.url}")
-            raise DownloadFailed(f"Invalid URL: {request.url}")
+            raise UrlException(f"Invalid URL: {request.url}")
 
         if request.url in self.blacklist_sites:
             self.logger.warning(f"URL is blacklisted: {request.url}")
-            raise DownloadFailed(f"URL is blacklisted: {request.url}")
+            raise BlacklistException(f"URL is blacklisted: {request.url}")
         
         self.logger.debug("Checking cache for existing download...")
         cached_item = self.cache_service.get(request.url)
@@ -73,7 +77,7 @@ class DownloadUsecase():
 
             try:
                 self.logger.info(f"Initiating download from: {request.url}")
-                downloaded_file_path = await self.download_service.download(request.url, temp_folder)
+                downloaded_file_path = await self.download_service.download(request.url, request.format, temp_folder)
                 self.logger.info(f"Download completed: {downloaded_file_path.name}")
 
             except Exception as error:

@@ -17,9 +17,9 @@ class ExtensionLoader():
         """
         self.bot = bot
         self.services = list(services)
-        self.extensions = extensions
+        self.extensions = list(extensions)
         self.logger = logger
-        self.logger.debug(f"ExtensionLoader initialized with {len(self.services)} services and {len(list(extensions))} extensions.")
+        self.logger.debug(f"ExtensionLoader initialized with {len(self.services)} services and {len(self.extensions)} extensions.")
 
     async def load_extensions(self) -> None:
         self.logger.info("Starting extension loading...")

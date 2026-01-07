@@ -15,7 +15,6 @@ CACHE_INDEX_FILE = CACHE_DIR / "index.json"
 DEFAULT_TEMP_DIR = Path(".temp")
 DRIVE_MAX_RETRY_COUNT = 3
 DEFAULT_YT_DLP_SETTINGS = {
-    'format': 'best',
     'postprocessors': [],
     'noplaylist': True,
     'no_warnings': True,
@@ -26,3 +25,4 @@ DEFAULT_YT_DLP_SETTINGS = {
     'match_filter': match_filter_func("!is_live"),
 }
 DRIVE_BASE_FILE_UPLOAD_URL = "https://drive.google.com/file/d/"
+DEFAULT_DOWNLOAD_FORMAT = "mp4" # change this later to a better method

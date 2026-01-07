@@ -4,7 +4,8 @@ from typing import Iterable, Any
 from src.infrastructure.services.config.models import ApplicationSettings
 
 from src.application.usecases.download_usecase import DownloadUsecase
-from src.infrastructure.services.ytdlp.ytdlp_download_service import YtdlpDownloadService
+from src.domain.models.download_settings import DownloadSettings
+from src.infrastructure.services.ytdlp import YtdlpDownloadService, YtdlpFormatMapper
 from src.infrastructure.services.url_validator import UrlValidator
 from src.infrastructure.services.temp_service import TempService
 from src.infrastructure.services.cache_service import CacheService
@@ -25,10 +26,10 @@ class ExtensionServicesBuilder:
         if settings.download_settings is None:
             raise RuntimeError("Download settings must be configured to build services.")
         
-        extension_services: Iterable[Any] = {
+        extension_services: tuple[Any, ...] = (
             DownloadUsecase(
                 logger=self.logger,
-                download_service=YtdlpDownloadService(logger=self.logger),
+                download_service=YtdlpDownloadService(logger=self.logger, ytdlp_format_mapper=YtdlpFormatMapper()),
                 temp_service=TempService(logger=self.logger),
                 cache_service=CacheService(logger=self.logger),
                 storage_service=GoogleDriveUploaderService(
@@ -39,7 +40,11 @@ class ExtensionServicesBuilder:
                 url_validator=UrlValidator(self.logger),
                 blacklist_sites=settings.download_settings.blacklist_sites,
             ),
-        }
+            DownloadSettings(
+                file_size_limit=settings.download_settings.file_size_limit,
+                blacklist_sites=settings.download_settings.blacklist_sites,
+            ),
+        )
 
         self.logger.info("Extension services built successfully")
         return extension_services

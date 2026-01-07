@@ -23,4 +23,9 @@ class LoggingConfigurator():
         
         logger = self._logging_setup.configure(level=log_level)
         
+        discord_http_logger = logging.getLogger("discord.http")
+        discord_http_logger.setLevel(logging.WARNING)
+        discord_gateway_logger = logging.getLogger("discord.gateway")
+        discord_gateway_logger.setLevel(logging.WARNING)
+
         logger.info(f"Logging configured with level: {logging.getLevelName(log_level)}")
