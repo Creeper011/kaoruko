@@ -14,7 +14,7 @@ class YtdlpFormatMapper():
     FORMAT_MAP: dict[str, dict] = {
             "mp4": {
                 "format": "bestvideo[vcodec=avc1][ext=mp4]+bestaudio/bestvideo[vcodec=avc1]+bestaudio/bestvideo[ext=mp4]+bestaudio/bestvideo+bestaudio/bestvideo+bestaudio/best",
-                "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "mp4"}], # if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}],
+                "post": [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}],
                 "is_audio": False
             },
             "mp3": {
@@ -24,12 +24,12 @@ class YtdlpFormatMapper():
             },
             "mkv": {
                 "format": "bestvideo+bestaudio",
-                "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "mkv"}], #if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "mkv"}],
+                "post": [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "mkv"}],
                 "is_audio": False
             },
             "webm": {
                 "format": "bestvideo[ext=webm]+bestaudio[ext=webm]/bestvideo+bestaudio",
-                "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "webm"}], #    if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "webm"}],
+                "post": [{'key': 'FFmpegVideoRemuxer', 'preferedformat': "webm"}],
                 "is_audio": False
             },
             "ogg": {

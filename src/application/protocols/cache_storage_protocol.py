@@ -80,3 +80,12 @@ class CacheStorageProtocol(Protocol):
             Number of orphaned files removed.
         """
         ...
+
+    def move_file_to_cache(self, key: str, source_path: Path) -> Path:
+        """Moves a file to the cache storage structure.
+        Args:
+            key: Cache key identifying this entry.
+            source_path: Path to the source file to be moved.
+        Returns:
+            Path where the file was moved in cache storage.
+        """

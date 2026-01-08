@@ -65,11 +65,20 @@ class CacheManager():
             CachedItem (Optional) """
         ...
         self.logger.debug(f"Storing cache item for key: {key}")
-        file_size = source_file.stat().st_size if source_file else UNKNOWN_FILE_SIZE
+        self.logger.debug(f"Original Source file: {source_file}, Remote URL: {remote_url}")    
+
+        source_path = None
+        key_str = self._key_to_str(key)
+
+        if source_file and source_file.exists():
+            self.logger.debug(f"Moving file to cache storage...")
+            source_path = self.storage.move_file_to_cache(key_str, source_file)
+
+        file_size = source_path.stat().st_size if source_path else UNKNOWN_FILE_SIZE
 
         cached_item = CachedItem(
             key=key,
-            local_path=source_file,
+            local_path=source_path,
             remote_url=remote_url,
             file_size=file_size
         )

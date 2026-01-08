@@ -6,6 +6,7 @@ from src.application.usecases.download_usecase import DownloadUsecase
 from src.application.dto.request.download_request import DownloadRequest
 from src.domain.models.download_settings import DownloadSettings
 from src.domain.enum.formats import Formats
+from src.domain.enum.quality import Quality
 from src.presentation.discord.factories import ErrorEmbedFactory
 from src.core.constants import DEFAULT_DOWNLOAD_FORMAT
 
@@ -20,8 +21,11 @@ class DownloadCog(commands.Cog):
     @app_commands.choices(format=[
         app_commands.Choice(name=format.value, value=format.value) for format in Formats
     ])
+    @app_commands.choices(quality=[
+        app_commands.Choice(name=quality.value, value=quality.value) for quality in Quality
+    ])
     @app_commands.command(name="download", description="Download a file from a URL")
-    async def download(self, interaction: discord.Interaction, url: str, format: Choice[str] | None = DEFAULT_DOWNLOAD_FORMAT) -> None:
+    async def download(self, interaction: discord.Interaction, url: str, format: Choice[str] | None = DEFAULT_DOWNLOAD_FORMAT, quality: Choice[str] | None = None) -> None:
         """Download command to download a file from a URL."""
         await interaction.response.defer()
         
@@ -39,10 +43,17 @@ class DownloadCog(commands.Cog):
             await interaction.followup.send(f"Invalid format: {format}. Supported formats are: {', '.join([f.value for f in Formats])}")
             return
         
+        if quality is None:
+            quality_value = Quality.DEFAULT
+        else:
+            quality_value = Quality(quality.value)
+
+        
         download_request = DownloadRequest(
             url=url,
             format=format_enum,
-            file_size_limit=file_size_limit
+            file_size_limit=file_size_limit,
+            quality=quality_value,
         )
         
         try:
@@ -63,7 +74,7 @@ class DownloadCog(commands.Cog):
     def _calculate_file_size_limit(self, interaction: discord.Interaction) -> int:
         """Calculate the file size limit based on guild settings."""
         if interaction.guild:
-            # Usa o maior entre o limite do servidor e o padrão
+
             return max(
                 self.download_settings.file_size_limit,
                 interaction.guild.filesize_limit

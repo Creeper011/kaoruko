@@ -8,4 +8,4 @@ class DownloadRequest:
     url: str
     file_size_limit: int
     format: Formats | None = None
-    quality: Quality | None = None
+    quality: Quality = Quality.DEFAULT

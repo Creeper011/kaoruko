@@ -96,3 +96,13 @@ class JSONCacheStorage():
         cache_path = self.cache_dir / cache_id
         cache_path.mkdir(parents=True, exist_ok=True)
         return cache_path
+    
+    def move_file_to_cache(self, key: str, source_path: Path) -> Path:
+        """Moves a file to the cache storage structure."""
+        cache_subdir = self._get_cache_dir(key)
+        destination_path = cache_subdir / source_path.name
+        
+        shutil.move(str(source_path), str(destination_path))
+        self.logger.debug(f"Moved file to cache at: {destination_path}")
+        
+        return destination_path
