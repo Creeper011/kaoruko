@@ -1,8 +1,8 @@
 import asyncio
+import logging
 from logging import Logger
 from pathlib import Path
 from typing import Optional
-
 from googleapiclient.http import MediaFileUpload
 from src.infrastructure.services.drive.google_drive_login_service import GoogleDriveLoginService
 from src.core.constants import DRIVE_MAX_RETRY_COUNT, DRIVE_BASE_FILE_UPLOAD_URL
@@ -10,8 +10,8 @@ from src.core.constants import DRIVE_MAX_RETRY_COUNT, DRIVE_BASE_FILE_UPLOAD_URL
 class GoogleDriveUploaderService():
     """Service for uploading files to Google Drive."""
     
-    def __init__(self, logger: Logger, login_service: GoogleDriveLoginService, drive_folder_id: str, max_retries: Optional[int] = DRIVE_MAX_RETRY_COUNT) -> None:
-        self.logger = logger
+    def __init__(self, login_service: GoogleDriveLoginService, drive_folder_id: str, max_retries: Optional[int] = DRIVE_MAX_RETRY_COUNT, logger: Optional[Logger] = None) -> None:
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.login_service = login_service
         self.drive_folder_id = drive_folder_id
         self.max_retries = max_retries

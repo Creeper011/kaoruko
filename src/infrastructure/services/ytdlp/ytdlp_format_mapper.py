@@ -1,4 +1,6 @@
+import logging
 from logging import Logger
+from typing import Optional
 from src.domain.enum.formats import Formats
 
 class YtdlpFormatMapper():
@@ -11,7 +13,7 @@ class YtdlpFormatMapper():
 
     FORMAT_MAP: dict[str, dict] = {
             "mp4": {
-                "format": "bestvideo[vcodec=avc1][ext=mp4]+bestaudio/bestvideo[vcodec=avc1]{video_quality}+bestaudio{audio_quality}/bestvideo{video_quality}[ext=mp4]+bestaudio{audio_quality}/bestvideo{video_quality}+bestaudio{audio_quality}/bestvideo+bestaudio/best",
+                "format": "bestvideo[vcodec=avc1][ext=mp4]+bestaudio/bestvideo[vcodec=avc1]+bestaudio/bestvideo[ext=mp4]+bestaudio/bestvideo+bestaudio/bestvideo+bestaudio/best",
                 "post": [{'key': 'FFmpegVideoConvertor', 'preferedformat': "mp4"}], # if should_transcode else {'key': 'FFmpegVideoRemuxer', 'preferedformat': "mp4"}],
                 "is_audio": False
             },
@@ -38,7 +40,7 @@ class YtdlpFormatMapper():
         }
 
     @classmethod
-    def map_format(cls, format_value: Formats | None, logger: Logger) -> dict:
+    def map_format(cls, format_value: Formats | None, logger: Optional[Logger] = None) -> dict:
         """Map the format string to yt-dlp format codes.
 
         Args:
@@ -50,6 +52,9 @@ class YtdlpFormatMapper():
         Raises:
             ValueError: If the format string is not recognized
         """
+        if logger is None:
+            logger = logging.getLogger(cls.__name__)
+
         if format_value is None:
             return {
                 "format": "bestvideo+bestaudio/best"

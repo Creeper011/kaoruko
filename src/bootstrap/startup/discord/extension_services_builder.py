@@ -30,15 +30,14 @@ class ExtensionServicesBuilder:
         extension_services: tuple[Any, ...] = (
             DownloadUsecase(
                 logger=self.logger,
-                download_service=YtdlpDownloadService(logger=self.logger, ytdlp_format_mapper=YtdlpFormatMapper()),
-                temp_service=TempService(logger=self.logger),
-                cache_manager=CacheManager(logger=self.logger, storage=JSONCacheStorage(logger=self.logger)),
+                download_service=YtdlpDownloadService(ytdlp_format_mapper=YtdlpFormatMapper()),
+                temp_service=TempService(),
+                cache_manager=CacheManager(storage=JSONCacheStorage(logger=self.logger)),
                 storage_service=GoogleDriveUploaderService(
-                    logger=self.logger, 
                     login_service=self.drive_login,
                     drive_folder_id=settings.drive_settings.folder_id,
                 ),
-                url_validator=UrlValidator(self.logger),
+                url_validator=UrlValidator(),
                 blacklist_sites=settings.download_settings.blacklist_sites,
             ),
             DownloadSettings(

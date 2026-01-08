@@ -1,5 +1,7 @@
 import yt_dlp
 import asyncio
+import logging
+from typing import Optional
 from pathlib import Path
 from logging import Logger
 from typing import Any, Dict
@@ -10,8 +12,8 @@ from src.domain.enum.formats import Formats
 class YtdlpDownloadService():
     """Service for downloading files using yt-dlp."""
 
-    def __init__(self, logger: Logger, ytdlp_format_mapper: YtdlpFormatMapper) -> None:
-        self.logger = logger
+    def __init__(self, ytdlp_format_mapper: YtdlpFormatMapper, logger: Optional[Logger] = None) -> None:
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.ytdlp_format_mapper = ytdlp_format_mapper
         self.logger.info("YtdlpDownloadService initialized")
 
@@ -25,7 +27,7 @@ class YtdlpDownloadService():
         Returns:
             Dictionary with yt-dlp options
         """
-        format_options = self.ytdlp_format_mapper.map_format(format_value, self.logger)
+        format_options = self.ytdlp_format_mapper.map_format(format_value)
 
         if 'post' in format_options:
             format_options['postprocessors'] = format_options.pop('post')

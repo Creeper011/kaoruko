@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Optional
 from pathlib import Path
 from logging import Logger
@@ -9,8 +10,8 @@ from src.application.protocols.cache_storage_protocol import CacheStorageProtoco
 class CacheManager():
     """Manages cache logic without technical storage implementation."""
     
-    def __init__(self, logger: Logger, storage: CacheStorageProtocol) -> None:
-        self.logger = logger
+    def __init__(self, storage: CacheStorageProtocol, logger: Optional[Logger] = None) -> None:
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.storage = storage
         self.cache_index: Dict[str, CachedItem] = {}
         

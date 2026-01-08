@@ -18,9 +18,7 @@ DEFAULT_YT_DLP_SETTINGS = {
     'js_runtimes': {
         'node': {}
     },
-    'remote_components': {
-        'ejs': 'github'
-    },
+    'remote_components': ['ejs:github'],
     'postprocessors': [],
     'noplaylist': True,
     'no_warnings': True,
