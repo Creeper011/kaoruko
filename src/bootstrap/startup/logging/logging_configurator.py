@@ -1,7 +1,7 @@
 import logging
 
 from src.bootstrap.startup.arg_parser import ArgParser
-from src.bootstrap.startup.logging_setup import LoggingSetup
+from src.bootstrap.startup.logging.logging_setup import LoggingSetup
 
 class LoggingConfigurator():
     """Orchestrates the logging configuration."""

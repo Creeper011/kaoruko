@@ -15,6 +15,12 @@ CACHE_INDEX_FILE = CACHE_DIR / "index.json"
 DEFAULT_TEMP_DIR = Path(".temp")
 DRIVE_MAX_RETRY_COUNT = 3
 DEFAULT_YT_DLP_SETTINGS = {
+    'js_runtimes': {
+        'node': {}
+    },
+    'remote_components': {
+        'ejs': 'github'
+    },
     'postprocessors': [],
     'noplaylist': True,
     'no_warnings': True,

@@ -1,7 +1,7 @@
 from logging import Logger
 from src.application.protocols.download_service_protocol import DownloadServiceProtocol
 from src.application.protocols.temp_service_protocol import TempServiceProtocol
-from src.application.protocols.cache_service_protocol import CacheServiceProtocol
+from src.application.services.cache_manager import CacheManager
 from src.application.protocols.storage_service_protocol import StorageServiceProtocol
 from src.application.protocols.url_validator_protocol import URLValidatorProtocol
 from src.application.dto.request.download_request import DownloadRequest
@@ -18,11 +18,11 @@ class DownloadUsecase():
     """Usecase for downloading files with caching and storage handling."""
     
     def __init__(self, download_service: DownloadServiceProtocol, temp_service: TempServiceProtocol,
-                 cache_service: CacheServiceProtocol, storage_service: StorageServiceProtocol,
+                 cache_manager: CacheManager, storage_service: StorageServiceProtocol,
                  url_validator: URLValidatorProtocol, blacklist_sites: list[str], logger: Logger) -> None:
         self.download_service = download_service
         self.temp_service = temp_service
-        self.cache_service = cache_service
+        self.cache_manager = cache_manager
         self.storage_service = storage_service
         self.url_validator = url_validator
         self.blacklist_sites = blacklist_sites
@@ -47,7 +47,7 @@ class DownloadUsecase():
             raise BlacklistException(f"URL is blacklisted: {request.url}")
         
         self.logger.debug("Checking cache for existing download...")
-        cached_item = self.cache_service.get(request.url)
+        cached_item = self.cache_manager.get(request.url)
 
         if cached_item:
             self.logger.info(f"Cache HIT for URL: {request.url}")
@@ -101,8 +101,8 @@ class DownloadUsecase():
                     self.logger.info(f"File uploaded successfully to: {final_url}")
 
                     self.logger.debug("Registering remote URL in cache for future requests")
-                    
-                    cached_item = self.cache_service.register_remote(
+
+                    cached_item = self.cache_manager.register_remote(
                         key=request.url,
                         remote_url=final_url,
                         file_size=file_size,
@@ -122,9 +122,9 @@ class DownloadUsecase():
                     f"File size ({file_size / 1024 / 1024:.2f} MB) within limit "
                     f"({request.file_size_limit / 1024 / 1024:.2f} MB) - saving locally"
                 )
-                self.logger.debug("Asking CacheService to persist the file from temp to .cache...")
+                self.logger.debug("Asking CacheManager to persist the file from temp to .cache...")
 
-                cached_item = self.cache_service.store(
+                cached_item = self.cache_manager.store(
                     key=request.url,
                     source_path=downloaded_file_path,
                     file_size=file_size,
