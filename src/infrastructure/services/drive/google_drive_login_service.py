@@ -11,26 +11,14 @@ API_VERSION = "v3"
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 class GoogleDriveLoginService():
-    """Only do the login process for Google Drive as a Singleton Service with async."""
-    
-    _instance: Optional['GoogleDriveLoginService'] = None
-    _initialized: bool = False
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(GoogleDriveLoginService, cls).__new__(cls)
-        return cls._instance
+    """Only do the login process for Google Drive with async."""
 
     def __init__(self, logger: Logger, account_filepath: Path) -> None:
-        if self._initialized:
-            return
-
         self.logger = logger
         self.account_filepath = account_filepath
         self.drive_service: Optional[Resource] = None
         self._lock = asyncio.Lock()
         
-        self._initialized = True
         self.logger.info("GoogleDriveLoginService initialized")
 
     async def login(self) -> None:
