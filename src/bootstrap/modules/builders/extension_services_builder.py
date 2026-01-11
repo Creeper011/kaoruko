@@ -1,5 +1,6 @@
 import logging
 from typing import Iterable, Any
+from src.bootstrap.models import Builder
 
 from src.infrastructure.services.config.models import ApplicationSettings
 
@@ -13,18 +14,19 @@ from src.infrastructure.services.cache import JSONCacheStorage
 from src.infrastructure.services.drive.google_drive_login_service import GoogleDriveLoginService
 from src.infrastructure.services.drive.google_drive_uploader_service import GoogleDriveUploaderService
 
-class ExtensionServicesBuilder:
+class ExtensionServicesBuilder(Builder):
     """Builds services related to extensions that gonna be used by Discord Module"""
 
-    def __init__(self, drive_login: GoogleDriveLoginService) -> None:
+    def __init__(self, settings: ApplicationSettings, drive_login: GoogleDriveLoginService) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.settings = settings
         self.drive_login = drive_login
 
-    def build_services(self, settings: ApplicationSettings) -> Iterable[Any]:
+    def build(self) -> Iterable[Any]:
         """Builds and returns services for extensions."""
         self.logger.info("Building extension services")
 
-        if settings.download_settings is None:
+        if self.settings.download_settings is None:
             raise RuntimeError("Download settings must be configured to build services.")
         
         extension_services: tuple[Any, ...] = (
@@ -35,14 +37,14 @@ class ExtensionServicesBuilder:
                 cache_manager=CacheManager(storage=JSONCacheStorage(logger=self.logger)),
                 storage_service=GoogleDriveUploaderService(
                     login_service=self.drive_login,
-                    drive_folder_id=settings.drive_settings.folder_id,
+                    drive_folder_id=self.settings.drive_settings.folder_id,
                 ),
                 url_validator=UrlValidator(),
-                blacklist_sites=settings.download_settings.blacklist_sites,
+                blacklist_sites=self.settings.download_settings.blacklist_sites,
             ),
             DownloadSettings(
-                file_size_limit=settings.download_settings.file_size_limit,
-                blacklist_sites=settings.download_settings.blacklist_sites,
+                file_size_limit=self.settings.download_settings.file_size_limit,
+                blacklist_sites=self.settings.download_settings.blacklist_sites,
             ),
         )
 

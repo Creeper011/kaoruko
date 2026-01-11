@@ -1,11 +1,13 @@
 import logging
 from logging import Logger
 
-class LoggingSetup():
-    """Handles the actual configuration of the logging system."""
+class LoggingBuilder():
+    """Builds the actual configuration of the logging system."""
 
-    @staticmethod
-    def configure(level: int = logging.INFO) -> Logger:
+    def __init__(self, level: int = logging.INFO) -> None:
+        self.level = level
+
+    def build(self) -> Logger:
         """
         Configures the basic logging for the application.
 
@@ -13,7 +15,7 @@ class LoggingSetup():
             level: The desired logging level (e.g., logging.INFO).
         """
         logging.basicConfig(
-            level=level,
+            level=self.level,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             force=True,  
         )

@@ -1,17 +1,20 @@
 import logging
+
+from src.bootstrap.models import Builder
+
 from src.infrastructure.services.config.utils import LoadersFinder, MapperFinder
 from src.infrastructure.services.config.parsers import SettingsParser
 from src.infrastructure.services.config.mappers import SettingsMapper
 from src.infrastructure.services.config.settings_factory import SettingsFactory
 from src.infrastructure.services.config.models.application_settings import ApplicationSettings
 
-class SettingsBuilder():
+class SettingsBuilder(Builder):
     """Contains all process to build the settings (config) system"""
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def build_settings(self) -> ApplicationSettings:
+    def build(self) -> ApplicationSettings:
         loaders_finder = LoadersFinder(self.logger)
         loader_classes = loaders_finder.find_loader_classes()
         loaders = [loader(logger=self.logger) for loader in loader_classes]

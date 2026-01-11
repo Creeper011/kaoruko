@@ -40,7 +40,7 @@ class DownloadUsecase():
 
         cache_key = self._create_cache_key(request)
 
-        cached_item = self.cache_manager.get_item(cache_key)
+        cached_item = await self.cache_manager.get_item(cache_key)
         if cached_item:
             output = self._handle_cache_hit(cached_item)
             if output: return output
@@ -55,7 +55,7 @@ class DownloadUsecase():
                     self.logger.debug(f"File size exceeds limit {downloaded_file.file_size} (limit: {request.file_size_limit}), uploading to remote storage")
                     return await self._handle_remote_storage(cache_key, downloaded_file.file_path, downloaded_file.file_size)
                 
-                return self._handle_local_storage(cache_key, downloaded_file.file_path)
+                return await self._handle_local_storage(cache_key, downloaded_file.file_path)
 
             except Exception as e:
                 self.logger.error(f"Execution failed: {e}")
@@ -93,9 +93,9 @@ class DownloadUsecase():
 
     async def _handle_remote_storage(self, key: CacheKey, path: Path, size: int) -> DownloadOutput:
         final_url = await self.storage_service.upload(path)
-        cached = self.cache_manager.store_item(key=key, source_file=None, remote_url=final_url)
+        cached = await self.cache_manager.store_item(key=key, source_file=None, remote_url=final_url)
         return DownloadOutput(file_path=None, file_url=cached.remote_url, file_size=size)
 
-    def _handle_local_storage(self, key: CacheKey, path: Path) -> DownloadOutput:
-        cached = self.cache_manager.store_item(key=key, source_file=path, remote_url=None)
+    async def _handle_local_storage(self, key: CacheKey, path: Path) -> DownloadOutput:
+        cached = await self.cache_manager.store_item(key=key, source_file=path, remote_url=None)
         return DownloadOutput(file_path=cached.local_path, file_url=None, file_size=cached.file_size)

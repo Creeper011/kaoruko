@@ -17,20 +17,20 @@ class CacheManager():
         self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.storage = storage
 
-    def _load_database_index(self) -> Dict[str, Dict[str, Any]]:
+    async def _load_database_index(self) -> Dict[str, Dict[str, Any]]:
         self.logger.debug("Loading cache database index...")
-        return self.storage.load_index()
+        return await self.storage.load_index()
 
-    def _save_database_index(self, index: Dict[str, Dict[str, Any]]) -> Result:
+    async def _save_database_index(self, index: Dict[str, Dict[str, Any]]) -> Result:
         self.logger.debug("Saving cache database index...")
         try:
-            self.storage.save_index(index)
+            await self.storage.save_index(index)
             return Result(ok=True)
         except Exception as error:
             self.logger.error(f"Failed to save cache index: {error}")
             return Result(ok=False, message=str(error), exception=error)
 
-    def get_item(self, key: CacheKey) -> Optional[CachedItem]:
+    async def get_item(self, key: CacheKey) -> Optional[CachedItem]:
         """Retrieves a cached item by its key.
         Args:
             key: (CacheKey) The indentifier to retrive
@@ -38,7 +38,7 @@ class CacheManager():
             CachedItem (Optional)
         """
         self.logger.debug(f"Retrieving cache item for key: {key}")
-        index = self._load_database_index()
+        index = await self._load_database_index()
         key_str = self._key_to_str(key)
 
         item_data = index.get(key_str)
@@ -50,12 +50,12 @@ class CacheManager():
         return self._deserialize_item({key_str: item_data})
 
     @overload
-    def store_item(self, key: CacheKey, source_file: Path, remote_url: None) -> CachedItem: ...
+    async def store_item(self, key: CacheKey, source_file: Path, remote_url: None) -> CachedItem: ...
 
     @overload
-    def store_item(self, key: CacheKey, source_file: None, remote_url: str) -> CachedItem: ...
+    async def store_item(self, key: CacheKey, source_file: None, remote_url: str) -> CachedItem: ...
 
-    def store_item(self, key: CacheKey, source_file: Optional[Path], remote_url: Optional[str]) -> Optional[CachedItem]:
+    async def store_item(self, key: CacheKey, source_file: Optional[Path], remote_url: Optional[str]) -> Optional[CachedItem]:
         """Index a item to cache
         Args:
             key: (CacheKey) The indentifier to store
@@ -63,7 +63,6 @@ class CacheManager():
             remote_url: (str) The remote url to index with the key
         Returns:
             CachedItem (Optional) """
-        ...
         self.logger.debug(f"Storing cache item for key: {key}")
         self.logger.debug(f"Original Source file: {source_file}, Remote URL: {remote_url}")    
 
@@ -72,7 +71,7 @@ class CacheManager():
 
         if source_file and source_file.exists():
             self.logger.debug(f"Moving file to cache storage...")
-            source_path = self.storage.move_file_to_cache(key_str, source_file)
+            source_path = await self.storage.move_file_to_cache(key_str, source_file)
 
         file_size = source_path.stat().st_size if source_path else UNKNOWN_FILE_SIZE
 
@@ -83,9 +82,9 @@ class CacheManager():
             file_size=file_size
         )
 
-        index = self._load_database_index()
+        index = await self._load_database_index()
         index.update(self._serialize_item(cached_item))
-        result = self._save_database_index(index)
+        result = await self._save_database_index(index)
 
         if not result.ok:
             self.logger.warning(f"Failed to save cache index: {result.message}")

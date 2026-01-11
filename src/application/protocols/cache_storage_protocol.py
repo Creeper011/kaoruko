@@ -4,7 +4,7 @@ from pathlib import Path
 class CacheStorageProtocol(Protocol):
     """Protocol defining storage operations for cache persistence."""
     
-    def load_index(self) -> Dict[str, Dict[str, Any]]:
+    async def load_index(self) -> Dict[str, Dict[str, Any]]:
         """
         Loads the complete cache index from storage.
         
@@ -13,7 +13,7 @@ class CacheStorageProtocol(Protocol):
         """
         ...
     
-    def save_index(self, index: Dict[str, Dict[str, Any]]) -> None:
+    async def save_index(self, index: Dict[str, Dict[str, Any]]) -> None:
         """
         Persists the complete cache index to storage.
         
@@ -81,7 +81,7 @@ class CacheStorageProtocol(Protocol):
         """
         ...
 
-    def move_file_to_cache(self, key: str, source_path: Path) -> Path:
+    async def move_file_to_cache(self, key: str, source_path: Path) -> Path:
         """Moves a file to the cache storage structure.
         Args:
             key: Cache key identifying this entry.

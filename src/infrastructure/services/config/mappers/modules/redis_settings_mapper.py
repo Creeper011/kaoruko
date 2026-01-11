@@ -3,7 +3,8 @@ import dataclasses
 from typing import Dict, Any, Optional
 from logging import Logger
 from src.domain.models.settings import RedisSettings
-from src.core.constants import DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT, DEFAULT_REDIS_USERNAME, DEFAULT_REDIS_PASSWORD
+from src.core.constants import (DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT, DEFAULT_REDIS_USERNAME, 
+                                DEFAULT_REDIS_PASSWORD, DEFAULT_REDIS_CACHE_DB, DEFAULT_REDIS_LOGIN_DB)
 from src.infrastructure.services.config.models import ApplicationSettings
 from src.infrastructure.services.config.interfaces.protocols import MapperProtocol
 
@@ -24,6 +25,8 @@ class RedisSettingsMapper(MapperProtocol):
             redis_settings = RedisSettings(
                 host=redis_config.get("host", DEFAULT_REDIS_HOST),
                 port=redis_config.get("port", DEFAULT_REDIS_PORT),
+                cache_db=redis_config.get("cache_db", DEFAULT_REDIS_CACHE_DB),
+                login_db=redis_config.get("login_db", DEFAULT_REDIS_LOGIN_DB),
                 username=redis_config.get("username", DEFAULT_REDIS_USERNAME),
                 password=redis_config.get("password", DEFAULT_REDIS_PASSWORD),
             )

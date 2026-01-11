@@ -1,91 +1,87 @@
 import logging
-from typing import cast
+from typing import cast, Iterable, Any
 from discord.ext.commands import Bot, AutoShardedBot
 from src.bootstrap.models.application import Application
-from src.bootstrap.startup import (
-    ArgParser,
-    DiscordExtensionStartup,
-    LoggingConfigurator,
-    LoggingSetup,
-    SettingsBuilder,
-    ExtensionServicesBuilder,
-    DriveSetup,
-)
+from src.bootstrap.modules.compositors import ArgParserCompositor, DiscordExtensionCompositor, LoggingConfigurator
+from src.bootstrap.modules.builders import LoggingBuilder, SettingsBuilder, ExtensionServicesBuilder, DriveBuilder
 from src.infrastructure.services.config.models import ApplicationSettings
 from src.infrastructure.services.discord import BaseBot
 from src.infrastructure.services.discord.factories.bot_factory import BotFactory
+from src.infrastructure.services.drive.google_drive_login_service import GoogleDriveLoginService
 
 class ApplicationBuilder:
     """Builds the application and all its runtime dependencies."""
 
     def __init__(self) -> None:
-        self.settings: ApplicationSettings | None = None
-        self.bot: BaseBot | None = None
         self.logger: logging.Logger | None = None
 
     def _configure_logging(self) -> None:
         """Configures logging."""
         logging_configurator = LoggingConfigurator(
-            arg_parser=ArgParser(),
-            logging_setup=LoggingSetup(),
+            arg_parser_compositor=ArgParserCompositor(),
+            logging_builder=LoggingBuilder(),
         )
-        logging_configurator.configure()
+        logging_configurator.compose()
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def _build_settings(self) -> None:
+    def _build_settings(self) -> ApplicationSettings:
         """Builds application settings."""
         if not self.logger:
             raise RuntimeError("Logger must be configured before building settings.")
         self.logger.info("Building application settings")
 
-        self.settings = SettingsBuilder().build_settings()
+        return SettingsBuilder().build()
 
-    async def _build_google_drive(self) -> None:
+    async def _build_google_drive(self, settings: ApplicationSettings) -> GoogleDriveLoginService:
         """Builds Google Drive-related components."""
-        if self.settings is None or not self.logger:
-            raise RuntimeError("Settings and logger must be configured before Google Drive components.")
+        if not self.logger:
+            raise RuntimeError("Logger must be configured before Google Drive components.")
 
-        if self.settings.drive_settings is None:
+        if settings.drive_settings is None:
             raise RuntimeError("Drive settings must be configured.")
 
-
-        self.drive_login_service = await DriveSetup(
-            drive_settings=self.settings.drive_settings,
-        ).build_login_service()
+        drive_login_service = await DriveBuilder(
+            drive_settings=settings.drive_settings,
+        ).build()
 
         self.logger.info("Google Drive login service built successfully")
-        
-    async def _build_discord(self) -> None:
+        return drive_login_service
+
+    def _build_extension_services(
+        self, settings: ApplicationSettings, drive_login_service: GoogleDriveLoginService
+    ) -> Iterable[Any]:
+        """Builds services for extensions."""
+        if not self.logger:
+            raise RuntimeError("Logger must be configured before building extension services.")
+
+        self.logger.info("Building extension services")
+        return ExtensionServicesBuilder(settings=settings, drive_login=drive_login_service).build()
+
+    async def _build_discord(
+        self, settings: ApplicationSettings, extension_services: Iterable[Any]
+    ) -> BaseBot:
         """Builds Discord-related components."""
-        if self.settings is None or not self.logger:
-            raise RuntimeError("Settings and logger must be configured before Discord components.")
+        if not self.logger:
+            raise RuntimeError("Logger must be configured before Discord components.")
 
-        if self.settings.bot_settings is None:
+        if settings.bot_settings is None:
             raise RuntimeError("Bot settings must be configured.")
-
-        if self.settings.download_settings is None:
-            raise RuntimeError("Download settings must be configured.")
-        
-        if not self.drive_login_service:
-            raise RuntimeError("Drive login service must be built before Discord components.")
 
         self.logger.info("Building Discord bot")
 
-        self.bot = BotFactory(
+        bot = BotFactory(
             basebot=BaseBot,
             logger=self.logger,
-        ).create_bot(settings=self.settings.bot_settings)
+        ).create_bot(settings=settings.bot_settings)
 
-        discord_startup = DiscordExtensionStartup(
-            bot=cast(Bot, self.bot),
+        discord_compositor = DiscordExtensionCompositor(
+            bot=cast(Bot, bot),
+            services=extension_services,
         )
 
-        extension_services = ExtensionServicesBuilder(
-            drive_login=self.drive_login_service,
-        ).build_services(settings=self.settings)
-
-        await discord_startup.load_extensions(services=extension_services)
+        await discord_compositor.compose()
         self.logger.info("Discord bot built successfully")
+        return bot
 
     async def build(self) -> Application:
         """Builds the full application."""
@@ -94,17 +90,18 @@ class ApplicationBuilder:
         if not self.logger:
             raise RuntimeError("Logging configuration failed.")
 
-        self._build_settings()
-        await self._build_google_drive()
-        await self._build_discord()
+        settings = self._build_settings()
+        drive_login_service = await self._build_google_drive(settings)
+        extension_services = self._build_extension_services(settings, drive_login_service)
+        bot = await self._build_discord(settings, extension_services)
 
-        if self.bot is None or self.settings is None:
+        if bot is None or settings is None or drive_login_service is None:
             raise RuntimeError("Application not fully built")
 
         self.logger.info("Assembling application")
 
         return Application(
-            bot=cast(AutoShardedBot, self.bot),
-            drive=self.drive_login_service,
-            settings=self.settings,
+            bot=cast(AutoShardedBot, bot),
+            drive=drive_login_service,
+            settings=settings,
         )

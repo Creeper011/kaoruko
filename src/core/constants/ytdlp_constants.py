@@ -4,6 +4,7 @@ DEFAULT_YT_DLP_SETTINGS = {
     'js_runtimes': {
         'node': {}
     },
+    'cookiefile': 'cookies.txt',
     'remote_components': ['ejs:github'],
     'postprocessors': [],
     'noplaylist': True,

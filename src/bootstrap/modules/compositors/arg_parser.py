@@ -1,7 +1,9 @@
 import argparse
+from src.bootstrap.models import Compositor
+
 from src.core.constants import DEFAULT_DEBUG_FLAG
 
-class ArgParser:
+class ArgParserCompositor(Compositor):
     """Parse all CLI arguments"""
 
     def __init__(self) -> None:
@@ -15,5 +17,6 @@ class ArgParser:
             help="Enable debug logging"
         )
 
-    def parse_cli(self) -> argparse.Namespace:
+    def compose(self) -> argparse.Namespace:
+        """Parse cli"""
         return self.parser.parse_args()

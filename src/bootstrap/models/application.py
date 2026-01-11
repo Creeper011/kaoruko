@@ -8,7 +8,8 @@ from src.utils import AsciiArt
 class Application():
     """Represents the entire application runtime"""
 
-    def __init__(self, bot: AutoShardedBot, drive: GoogleDriveLoginService, settings: ApplicationSettings) -> None:
+    def __init__(self, bot: AutoShardedBot, drive: GoogleDriveLoginService,
+                 settings: ApplicationSettings) -> None:
         self.bot = bot
         self.drive = drive
         self.settings = settings
