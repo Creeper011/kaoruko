@@ -1,5 +1,5 @@
 import logging
-from src.domain.models.drive_settings import DriveSettings
+from src.domain.models.settings import DriveSettings
 from src.infrastructure.services.drive.google_drive_login_service import GoogleDriveLoginService
 
 class DriveSetup:

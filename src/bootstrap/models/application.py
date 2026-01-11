@@ -42,6 +42,7 @@ class Application():
     async def shutdown(self) -> None:
         self.logger.info("Starting shutdown process")
         if self.bot:
+            self.logger.info("Closing discord bot connection")
             await self.bot.close()
         if self.drive:
-            await self.drive.close_connection()
+            self.drive.close_connection()

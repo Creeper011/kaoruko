@@ -15,3 +15,4 @@ DEFAULT_YT_DLP_SETTINGS = {
     'match_filter': match_filter_func("!is_live"),
 }
 DEFAULT_DOWNLOAD_FORMAT = "mp4" # change this later to a better method
+DEFAULT_DOWNLOAD_FILESIZE_LIMIT = 25 * 1024 * 1024

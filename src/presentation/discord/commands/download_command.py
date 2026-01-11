@@ -4,7 +4,7 @@ from discord import app_commands
 from discord.app_commands import Choice
 from src.application.usecases.download_usecase import DownloadUsecase
 from src.application.dto.request.download_request import DownloadRequest
-from src.domain.models.download_settings import DownloadSettings
+from src.domain.models.settings.download_settings import DownloadSettings
 from src.domain.enum.formats import Formats
 from src.domain.enum.quality import Quality
 from src.presentation.discord.factories import ErrorEmbedFactory
@@ -73,12 +73,6 @@ class DownloadCog(commands.Cog):
 
     def _calculate_file_size_limit(self, interaction: discord.Interaction) -> int:
         """Calculate the file size limit based on guild settings."""
-        if interaction.guild:
-
-            return max(
-                self.download_settings.file_size_limit,
-                interaction.guild.filesize_limit
-            )
         return self.download_settings.file_size_limit
 
     def _parse_format(self, format_str: str | None) -> Formats | None:

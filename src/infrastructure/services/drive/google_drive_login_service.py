@@ -28,29 +28,31 @@ class GoogleDriveLoginService():
         self.logger = logger
         self.account_filepath = account_filepath
         self.drive_service: Optional[Resource] = None
+        self._lock = asyncio.Lock()
         
         self._initialized = True
         self.logger.info("GoogleDriveLoginService initialized")
 
     async def login(self) -> None:
         """Authenticates and builds the Drive service asynchronously."""
-        if self.drive_service:
-            self.logger.debug("Google Drive Service is already active.")
-            return
+        async with self._lock:
+            if self.drive_service:
+                self.logger.debug("Google Drive Service is already active.")
+                return
 
-        self.logger.info("Logging into Google Drive...")
+            self.logger.info("Logging into Google Drive...")
 
-        if not self.account_filepath.exists():
-            msg = f"Service account file not found: {self.account_filepath}"
-            self.logger.error(msg)
-            raise FileNotFoundError(msg)
+            if not self.account_filepath.exists():
+                msg = f"Service account file not found: {self.account_filepath}"
+                self.logger.error(msg)
+                raise FileNotFoundError(msg)
 
-        try:
-            self.drive_service = await asyncio.to_thread(self._sync_build_service)
-            self.logger.info("Google Drive authenticated successfully.")
-        except Exception as e:
-            self.logger.error(f"Failed to login to Google Drive: {e}")
-            raise e
+            try:
+                self.drive_service = await asyncio.to_thread(self._sync_build_service)
+                self.logger.info("Google Drive authenticated successfully.")
+            except Exception as e:
+                self.logger.error(f"Failed to login to Google Drive: {e}")
+                raise e
 
     def _sync_build_service(self) -> Resource:
         """Internal synchronous method to run inside a thread."""
@@ -63,20 +65,22 @@ class GoogleDriveLoginService():
     async def reconnect(self) -> None:
         """Forces a re-authentication."""
         self.logger.warning("Reconnecting to Google Drive...")
-        await self.close_connection()
-        await self.login()
+        async with self._lock:
+            self.close_connection()
+            await self.login()
 
     async def get_instance_drive(self) -> Resource:
         """Returns the Drive service instance, logging in if necessary."""
         self.logger.debug("Getting Google Drive instance...")
         
-        if self.drive_service is None:
-            self.logger.warning("Drive service was None, attempting to login...")
-            await self.login()
-            
-        return self.drive_service
+        async with self._lock:
+            if self.drive_service is None:
+                self.logger.warning("Drive service was None, attempting to login...")
+                await self.login()
+                
+            return self.drive_service
 
-    async def close_connection(self) -> None:
+    def close_connection(self) -> None:
         """Closes the connection to the Google Drive API."""
         if self.drive_service:
             self.logger.debug("Closing Google Drive connection...")

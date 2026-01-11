@@ -1,7 +1,7 @@
 from typing import Protocol
 from pathlib import Path
 
-class StorageServiceProtocol(Protocol):
+class RemoteStorageServiceProtocol(Protocol):
     """Protocol for storage service. (Like google drive)"""
     
     async def upload(self, file_path: Path) -> str:

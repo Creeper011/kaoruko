@@ -4,12 +4,12 @@ from typing import Iterable, Any
 from src.infrastructure.services.config.models import ApplicationSettings
 
 from src.application.usecases.download_usecase import DownloadUsecase
-from src.application.services.cache_manager import CacheManager
-from src.domain.models.download_settings import DownloadSettings
+from src.infrastructure.services.cache.cache_manager import CacheManager
+from src.domain.models.settings import DownloadSettings
 from src.infrastructure.services.ytdlp import YtdlpDownloadService, YtdlpFormatMapper
 from src.infrastructure.services.url_validator import UrlValidator
 from src.infrastructure.services.temp_service import TempService
-from src.infrastructure.services.cache import JSONCacheStorage
+from src.infrastructure.services.cache.implementation import JSONCacheStorage
 from src.infrastructure.services.drive.google_drive_login_service import GoogleDriveLoginService
 from src.infrastructure.services.drive.google_drive_uploader_service import GoogleDriveUploaderService
 

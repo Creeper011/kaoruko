@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Optional
 from src.application.protocols.download_service_protocol import DownloadServiceProtocol
 from src.application.protocols.temp_service_protocol import TempServiceProtocol
-from src.application.services.cache_manager import CacheManager
-from src.application.protocols.storage_service_protocol import StorageServiceProtocol
+from src.infrastructure.services.cache.cache_manager import CacheManager
+from src.application.protocols.remote_storage_service_protocol import RemoteStorageServiceProtocol
 from src.application.protocols.url_validator_protocol import URLValidatorProtocol
 from src.application.dto.request.download_request import DownloadRequest
 from src.application.dto.output.download_output import DownloadOutput
@@ -22,7 +22,7 @@ class DownloadUsecase():
     """Usecase for downloading files with caching and storage handling."""
     
     def __init__(self, download_service: DownloadServiceProtocol, temp_service: TempServiceProtocol,
-                 cache_manager: CacheManager, storage_service: StorageServiceProtocol,
+                 cache_manager: CacheManager, storage_service: RemoteStorageServiceProtocol,
                  url_validator: URLValidatorProtocol, blacklist_sites: list[str], logger: Logger) -> None:
         self.download_service = download_service
         self.temp_service = temp_service
@@ -36,12 +36,8 @@ class DownloadUsecase():
 
     async def execute(self, request: DownloadRequest) -> DownloadOutput:
         self._validate_request(request)
-        
-        cache_key = CacheKey(
-            url=request.url,
-            format_value=request.format,
-            quality=request.quality,
-        )
+
+        cache_key = self._create_cache_key(request)
 
         cached_item = self.cache_manager.get_item(cache_key)
         if cached_item:
@@ -56,6 +52,7 @@ class DownloadUsecase():
                 file_size = downloaded_path.stat().st_size
 
                 if file_size > request.file_size_limit:
+                    self.logger.debug(f"File size exceeds limit {file_size} (limit: {request.file_size_limit}), uploading to remote storage")
                     return await self._handle_remote_storage(cache_key, downloaded_path, file_size)
                 
                 return self._handle_local_storage(cache_key, downloaded_path)
@@ -63,6 +60,21 @@ class DownloadUsecase():
             except Exception as e:
                 self.logger.error(f"Execution failed: {e}")
                 raise DownloadFailed(f"Failed to process download: {e}")
+            
+    def _create_cache_key(self, request: DownloadRequest) -> CacheKey:
+        if request.format.is_audio():
+            self.logger.debug("Creating cache key for audio format without quality")
+            return CacheKey(
+                url=request.url,
+                format_value=request.format,
+                quality=None,
+            )
+        
+        return CacheKey(
+            url=request.url,
+            format_value=request.format,
+            quality=request.quality,
+        )
 
     def _validate_request(self, request: DownloadRequest):
         if not self.url_validator.is_valid(request.url):
