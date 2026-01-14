@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
-from src.application.usecases.download_usecase import DownloadUsecase
+from src.application.protocols import DownloadUseCaseProtocol
 from src.application.dto.request.download_request import DownloadRequest
 from src.domain.models.settings.download_settings import DownloadSettings
 from src.domain.enum.formats import Formats
@@ -13,7 +13,7 @@ from src.core.constants import DEFAULT_DOWNLOAD_FORMAT
 class DownloadCog(commands.Cog):
     """Cog for download command."""
 
-    def __init__(self, bot: commands.Bot, download_usecase: DownloadUsecase, download_settings: DownloadSettings) -> None:
+    def __init__(self, bot: commands.Bot, download_usecase: DownloadUseCaseProtocol, download_settings: DownloadSettings) -> None:
         self.bot = bot
         self.download_usecase = download_usecase
         self.download_settings = download_settings
@@ -58,13 +58,18 @@ class DownloadCog(commands.Cog):
         
         try:
             download_output = await self.download_usecase.execute(download_request)
+            file_size_mb = self._bytes_to_megabytes(download_output.file_size) if download_output.file_size else "Unknown"
+            elapsed = self._normalize_elapsed_time(download_output.elapsed)
             
             if download_output.file_url:
-                await interaction.followup.send(f"File uploaded successfully: {download_output.file_url} (Size: {download_output.file_size} bytes)")
+                content = f"Download Completed! {f"Download Elapsed: {elapsed}s" if elapsed else None}, Filesize: {file_size_mb} MB\nLink: {download_output.file_url}"
+                await interaction.followup.send(content)
             elif download_output.file_path:
-                await interaction.followup.send(file=discord.File(download_output.file_path), content=f"File downloaded successfully (Size: {download_output.file_size} bytes)")
+                content = f"Download Completed! {f'Elapsed: {elapsed}s' if elapsed else ''}, Filesize: {file_size_mb} MB"
+                await interaction.followup.send(file=discord.File(download_output.file_path), content=content)
             else:
-                await interaction.followup.send("Download completed, but no file available.")
+                content = "Download completed, but no file URL or path was provided."
+                await interaction.followup.send(content)
         
         except Exception as error:
             self.bot.logger.error(f"Unexpected error in download command: {error}", exc_info=error)
@@ -75,6 +80,16 @@ class DownloadCog(commands.Cog):
         """Calculate the file size limit based on guild settings."""
         return self.download_settings.file_size_limit
 
+    def _normalize_elapsed_time(self, elapsed: float | None) -> float | None:
+        """Normalize elapsed time to two decimal places."""
+        if elapsed is None:
+            return None
+        return round(elapsed, 2)
+    
+    def _bytes_to_megabytes(self, bytes_size: int) -> int:
+        """Convert bytes to megabytes."""
+        return round(bytes_size / (1024 * 1024), 2)
+    
     def _parse_format(self, format_str: str | None) -> Formats | None:
         """Parse format string to Formats enum."""
         if not format_str:

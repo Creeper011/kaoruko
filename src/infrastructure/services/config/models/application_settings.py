@@ -3,7 +3,6 @@ from discord import Intents
 from dataclasses import dataclass
 from src.domain.models.settings.download_settings import DownloadSettings
 from src.domain.models.settings.drive_settings import DriveSettings
-from src.domain.models.settings.redis_settings import RedisSettings
 
 @dataclass(frozen=True)
 class BotSettings():
@@ -18,4 +17,3 @@ class ApplicationSettings():
     bot_settings: Optional[BotSettings] = None
     download_settings: Optional[DownloadSettings] = None
     drive_settings: Optional[DriveSettings] = None
-    redis_settings: Optional[RedisSettings] = None

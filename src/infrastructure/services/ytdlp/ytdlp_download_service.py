@@ -7,7 +7,7 @@ from logging import Logger
 from typing import Any, Dict
 from src.core.constants import DEFAULT_YT_DLP_SETTINGS
 from src.infrastructure.services.ytdlp import YtdlpFormatMapper
-from src.domain.enum.formats import Formats
+from src.domain.enum import Formats, Quality
 from src.domain.models import DownloadedFile
 
 class YtdlpDownloadService():
@@ -18,17 +18,19 @@ class YtdlpDownloadService():
         self.ytdlp_format_mapper = ytdlp_format_mapper
         self.logger.info("YtdlpDownloadService initialized")
 
-    def _get_ydl_opts(self, format_value: Formats | None, output_folder: Path) -> Dict[str, Any]:
+    def _get_ydl_opts(self, format_value: Formats | None, quality: Quality, output_folder: Path) -> Dict[str, Any]:
         """
         Get yt-dlp options for downloading.
         
         Args:
+            format_value: Format to download in
+            quality: Quality for video
             output_folder: Folder where the file will be downloaded
             
         Returns:
             Dictionary with yt-dlp options
         """
-        format_options = self.ytdlp_format_mapper.map_format(format_value)
+        format_options = self.ytdlp_format_mapper.map_format(format_value, quality)
 
         if 'post' in format_options:
             format_options['postprocessors'] = format_options.pop('post')
@@ -52,13 +54,14 @@ class YtdlpDownloadService():
         """
         ...
 
-    async def download(self, url: str, format_value: Formats | None, output_folder: Path) -> DownloadedFile:
+    async def download(self, url: str, format_value: Formats | None, quality: Quality, output_folder: Path) -> DownloadedFile:
         """
         Download file from URL using yt-dlp.
         
         Args:
             url: URL to download from
             format_value: Format to download in
+            quality: Quality for video
             output_folder: Folder where the file will be saved
             
         Returns:
@@ -68,16 +71,16 @@ class YtdlpDownloadService():
             Exception: If download fails
         """
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self._download_sync, url, format_value, output_folder)
+        return await loop.run_in_executor(None, self._download_sync, url, format_value, quality, output_folder)
     
-    def _download_sync(self, url: str, format_value: Formats | None, output_folder: Path) -> DownloadedFile:
+    def _download_sync(self, url: str, format_value: Formats | None, quality: Quality, output_folder: Path) -> DownloadedFile:
         self.logger.info(f"Starting download from: {url}")
         
         if not output_folder.exists():
             output_folder.mkdir(parents=True, exist_ok=True)
             self.logger.debug(f"Created output folder: {output_folder}")
 
-        ydl_opts = self._get_ydl_opts(format_value, output_folder)
+        ydl_opts = self._get_ydl_opts(format_value, quality, output_folder)
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:

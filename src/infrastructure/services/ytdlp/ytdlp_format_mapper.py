@@ -2,6 +2,7 @@ import logging
 from logging import Logger
 from typing import Optional
 from src.domain.enum.formats import Formats
+from src.domain.enum.quality import Quality
 
 class YtdlpFormatMapper():
     """Mapper the format string to yt-dlp format codes.
@@ -40,11 +41,12 @@ class YtdlpFormatMapper():
         }
 
     @classmethod
-    def map_format(cls, format_value: Formats | None, logger: Optional[Logger] = None) -> dict:
+    def map_format(cls, format_value: Formats | None, quality: Quality | None = None, logger: Optional[Logger] = None) -> dict:
         """Map the format string to yt-dlp format codes.
 
         Args:
-            format: Format string provided by the user
+            format_value: Format enum provided by the user
+            quality: Quality enum for video resolution
             logger: Logger instance for logging messages
         Returns:
             yt-dlp format options dictionary
@@ -65,5 +67,46 @@ class YtdlpFormatMapper():
             logger.error(f"Unrecognized format: {format_value}")
             raise ValueError(f"Unrecognized format: {format_value}")
 
-        logger.debug(f"Mapped format '{format_value.value}' to yt-dlp format options: {format_info}")
+        if quality and not format_info.get("is_audio", False):
+            height = cls._get_height_from_quality(quality)
+            format_info = format_info.copy()
+            format_info["format"] = cls._apply_quality_filter(format_info["format"], height)
+
+        logger.debug(f"Mapped format '{format_value.value}' with quality '{quality}' to yt-dlp format options: {format_info}")
         return format_info
+
+    @classmethod
+    def _get_height_from_quality(cls, quality: Quality) -> int:
+        """Extract height from quality enum value."""
+        return int(quality.value[:-1]) 
+
+    @classmethod
+    def _apply_quality_filter(cls, format_str: str, height: int) -> str:
+        """Apply height filter to video streams only.
+        
+        The height filter should only be applied to bestvideo/video streams,
+        not to bestaudio/audio streams.
+        """
+        format_options = format_str.split('/')
+        filtered_options = []
+        
+        for option in format_options:
+            if not option.strip():
+                continue
+                
+            # Split by '+' to handle combined streams (bestvideo+bestaudio)
+            streams = option.split('+')
+            filtered_streams = []
+            
+            for stream in streams:
+                # Apply height filter only to video streams
+                if 'bestvideo' in stream or 'video' in stream or stream.startswith('best['):
+                    # Add height filter to video selector
+                    filtered_streams.append(f"{stream}[height<={height}]")
+                else:
+                    # Leave audio streams and other selectors unchanged
+                    filtered_streams.append(stream)
+            
+            filtered_options.append('+'.join(filtered_streams))
+        
+        return '/'.join(filtered_options)

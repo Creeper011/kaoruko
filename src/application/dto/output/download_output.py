@@ -7,3 +7,4 @@ class DownloadOutput():
     file_path: Path | None = None
     file_url: str | None = None
     file_size: int | None = None
+    elapsed: float | None = None

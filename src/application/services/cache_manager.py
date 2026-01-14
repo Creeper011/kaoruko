@@ -50,17 +50,18 @@ class CacheManager():
         return self._deserialize_item({key_str: item_data})
 
     @overload
-    async def store_item(self, key: CacheKey, source_file: Path, remote_url: None) -> CachedItem: ...
+    async def store_item(self, key: CacheKey, source_file: Path, remote_url: None, file_size: None = None) -> CachedItem: ...
 
     @overload
-    async def store_item(self, key: CacheKey, source_file: None, remote_url: str) -> CachedItem: ...
+    async def store_item(self, key: CacheKey, source_file: None, remote_url: str, file_size: int) -> CachedItem: ...
 
-    async def store_item(self, key: CacheKey, source_file: Optional[Path], remote_url: Optional[str]) -> Optional[CachedItem]:
+    async def store_item(self, key: CacheKey, source_file: Optional[Path], remote_url: Optional[str], file_size: Optional[int] = None) -> Optional[CachedItem]:
         """Index a item to cache
         Args:
             key: (CacheKey) The indentifier to store
             source_file: (Path) The file to index with the key
             remote_url: (str) The remote url to index with the key
+            file_size: (int) The size of the file, if known
         Returns:
             CachedItem (Optional) """
         self.logger.debug(f"Storing cache item for key: {key}")
@@ -73,13 +74,16 @@ class CacheManager():
             self.logger.debug(f"Moving file to cache storage...")
             source_path = await self.storage.move_file_to_cache(key_str, source_file)
 
-        file_size = source_path.stat().st_size if source_path else UNKNOWN_FILE_SIZE
+        if file_size is not None:
+            computed_file_size = file_size
+        else:
+            computed_file_size = UNKNOWN_FILE_SIZE
 
         cached_item = CachedItem(
             key=key,
             local_path=source_path,
             remote_url=remote_url,
-            file_size=file_size
+            file_size=computed_file_size
         )
 
         index = await self._load_database_index()

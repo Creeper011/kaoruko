@@ -14,3 +14,6 @@ run-debug:
 
 clean:
 	./scripts/cleanup_pycache.sh
+
+clean-cache:
+	./scripts/cleanup_cache.sh

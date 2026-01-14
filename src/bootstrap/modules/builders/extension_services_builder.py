@@ -5,7 +5,9 @@ from src.bootstrap.models import Builder
 from src.infrastructure.services.config.models import ApplicationSettings
 
 from src.application.usecases.download_usecase import DownloadUsecase
+from src.application.usecases.timed_download_usecase import TimedDownloadUseCase
 from src.application.services import CacheManager
+from src.application.services.download import DownloaderService, DownloadRequestValidator, DownloadCacheService, SizeBasedStorageDecisionStrategy
 from src.domain.models.settings import DownloadSettings
 from src.infrastructure.services.ytdlp import YtdlpDownloadService, YtdlpFormatMapper
 from src.infrastructure.services.url_validator import UrlValidator
@@ -29,19 +31,38 @@ class ExtensionServicesBuilder(Builder):
         if self.settings.download_settings is None:
             raise RuntimeError("Download settings must be configured to build services.")
         
+        cache_manager = CacheManager(storage=JSONCacheStorage(logger=self.logger))
+        downloader_service = DownloaderService(
+            download_service=YtdlpDownloadService(ytdlp_format_mapper=YtdlpFormatMapper()),
+            logger=self.logger
+        )
+        validator = DownloadRequestValidator(
+            url_validator=UrlValidator(),
+            blacklist_sites=self.settings.download_settings.blacklist_sites
+        )
+        download_cache_service = DownloadCacheService(cache_manager=cache_manager)
+        decision_strategy = SizeBasedStorageDecisionStrategy()
+        storage_service = GoogleDriveUploaderService(
+            login_service=self.drive_login,
+            drive_folder_id=self.settings.drive_settings.folder_id,
+        )
+        temp_service = TempService()
+
+        usecase = DownloadUsecase(
+            downloader_service=downloader_service,
+            cache_manager=cache_manager,
+            storage_service=storage_service,
+            temp_service=temp_service,
+            validator=validator,
+            decision_strategy=decision_strategy,
+            download_cache_service=download_cache_service,
+            logger=self.logger
+        )
+
+        timed_usecase = TimedDownloadUseCase(usecase=usecase, logger=self.logger)
+
         extension_services: tuple[Any, ...] = (
-            DownloadUsecase(
-                logger=self.logger,
-                download_service=YtdlpDownloadService(ytdlp_format_mapper=YtdlpFormatMapper()),
-                temp_service=TempService(),
-                cache_manager=CacheManager(storage=JSONCacheStorage(logger=self.logger)),
-                storage_service=GoogleDriveUploaderService(
-                    login_service=self.drive_login,
-                    drive_folder_id=self.settings.drive_settings.folder_id,
-                ),
-                url_validator=UrlValidator(),
-                blacklist_sites=self.settings.download_settings.blacklist_sites,
-            ),
+            timed_usecase,
             DownloadSettings(
                 file_size_limit=self.settings.download_settings.file_size_limit,
                 blacklist_sites=self.settings.download_settings.blacklist_sites,
