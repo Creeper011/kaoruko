@@ -1,8 +1,13 @@
+"""
+Kaoruko v2
+Main entry point for the application.
+Handles application startup and shutdown.
+"""
+
 import asyncio
 import logging
 
 from src.bootstrap.application_builder import ApplicationBuilder
-
 
 async def main() -> None:
     """The main entry point for the application."""

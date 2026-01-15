@@ -1,6 +1,6 @@
 import yaml
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from logging import Logger
 from src.domain.exceptions.config_exceptions import YamlFailedLoad
 from src.core.constants import DEFAULT_YAML_CONFIG_PATH, YAML_FILE_ENCODING

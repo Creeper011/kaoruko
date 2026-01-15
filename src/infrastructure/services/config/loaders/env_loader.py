@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 from logging import Logger
 from dotenv import dotenv_values, load_dotenv
 from src.domain.exceptions import EnvFailedLoad

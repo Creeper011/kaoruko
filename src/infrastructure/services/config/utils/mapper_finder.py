@@ -1,7 +1,7 @@
 import logging
 from logging import Logger
 from pathlib import Path
-from typing import Type, Set
+from typing import Set
 from src.infrastructure.filesystem.module_finder import ModuleFinder
 from src.infrastructure.services.config.interfaces import MapperProtocol
 from src.core.constants import DEFAULT_MAPPERS_PATH

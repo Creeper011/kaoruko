@@ -1,12 +1,11 @@
 import inspect
 from logging import Logger
-from typing import Any, Dict, Type, Iterable, List
+from typing import Any, Dict, Type, Iterable
 from discord.ext.commands import Bot, Cog
 
 class ExtensionLoader():
     """Class to load extensions (cogs) into the bot with dependency injection."""
 
-    # 1. Mudamos de Dict para Iterable na tipagem
     def __init__(self, logger: Logger, bot: Bot, extensions: Iterable[Type[Cog]], services: Iterable[Any]):
         """
         Args:

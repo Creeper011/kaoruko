@@ -1,0 +1,8 @@
+.venv
+.cache
+.git
+__pycache__
+*.log
+.DS_Store
+.env.example
+config.yaml.example
