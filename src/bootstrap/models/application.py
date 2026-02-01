@@ -14,22 +14,22 @@ class Application():
         self.drive = drive
         self.settings = settings
         self.logger = logging.getLogger(self.__class__.__name__)
-        
+
     async def run(self) -> None:
         """Runs the application"""
         if not self.bot or not self.settings:
             raise RuntimeError("Application has not been built. Call build() before running.")
-        
+
         AsciiArt.print_ascii_art(self.logger)
         self.logger.info("Starting Discord bot...")
         try:
             if not self.settings.bot_settings:
                 raise ValueError("Bot settings are not configured in the application settings.")
-            
+
             token = self.settings.bot_settings.token
             if token is None:
                 raise ValueError("Discord token is not set in the application settings.")
-            
+
             await self.bot.start(token=token, reconnect=DEFAULT_DISCORD_RECONNECT)
         except (TypeError, ValueError) as error:
             self.logger.critical("Could not start the application due the Discord Token is not valid. Make sure if you running the project in the correct root directory.",

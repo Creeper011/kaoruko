@@ -12,7 +12,7 @@ class TimedDownloadUseCase():
 
     async def execute(self, request: DownloadRequest) -> DownloadOutput:
         start_time = time.perf_counter()
-        
+
         result = await self.usecase.execute(request)
         elapsed_time = time.perf_counter() - start_time
 

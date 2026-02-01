@@ -20,13 +20,13 @@ class SettingsFactory():
         for loader in self.loaders:
             all_data.update(loader.load())
         return all_data
-    
+
     def build_settings(self) -> ApplicationSettings:
         """Builds the complete ApplicationSettings object by loading."""
-        
+
         raw_data = self.load_data()
         parsed_data = self.parser.parse(raw_data)
         app_settings = self.mapper.map_data(parsed_data)
-        
+
         self.logger.info("All processes to build application settings have occurred successfully with no errors.")
         return app_settings

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RedisSettings:
-    host: str 
+    host: str
     port: int
     cache_db: int
     login_db: int

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Union
-from src.domain.exceptions.base_exception import ApplicationBaseException  
+from src.domain.exceptions.base_exception import ApplicationBaseException
 
 @dataclass(frozen=True)
 class Result():

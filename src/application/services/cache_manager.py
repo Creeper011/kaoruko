@@ -12,7 +12,7 @@ from src.core.constants import UNKNOWN_FILE_SIZE, DEFAULT_STRING_DIVISOR
 
 class CacheManager():
     """Manages cache logic with a external interface CacheStorage"""
-    
+
     def __init__(self, storage: CacheStorageProtocol, logger: Optional[Logger] = None) -> None:
         self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.storage = storage
@@ -65,7 +65,7 @@ class CacheManager():
         Returns:
             CachedItem (Optional) """
         self.logger.debug(f"Storing cache item for key: {key}")
-        self.logger.debug(f"Original Source file: {source_file}, Remote URL: {remote_url}")    
+        self.logger.debug(f"Original Source file: {source_file}, Remote URL: {remote_url}")
 
         source_path = None
         key_str = self._key_to_str(key)
@@ -100,7 +100,7 @@ class CacheManager():
     def _key_to_str(self, key: CacheKey) -> str:
         """Converts a CacheKey object to a unique string representation"""
         return f"{key.url}{DEFAULT_STRING_DIVISOR}{key.format_value.value}{DEFAULT_STRING_DIVISOR}{key.quality.value if key.quality else 'none'}"
-    
+
     def _serialize_item(self, item: CachedItem) -> Dict[str, Dict[str, Any]]:
         """Converts a CachedItem object to a dict data"""
         return {

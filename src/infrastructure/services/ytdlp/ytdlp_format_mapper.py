@@ -78,26 +78,26 @@ class YtdlpFormatMapper():
     @classmethod
     def _get_height_from_quality(cls, quality: Quality) -> int:
         """Extract height from quality enum value."""
-        return int(quality.value[:-1]) 
+        return int(quality.value[:-1])
 
     @classmethod
     def _apply_quality_filter(cls, format_str: str, height: int) -> str:
         """Apply height filter to video streams only.
-        
+
         The height filter should only be applied to bestvideo/video streams,
         not to bestaudio/audio streams.
         """
         format_options = format_str.split('/')
         filtered_options = []
-        
+
         for option in format_options:
             if not option.strip():
                 continue
-                
+
             # Split by '+' to handle combined streams (bestvideo+bestaudio)
             streams = option.split('+')
             filtered_streams = []
-            
+
             for stream in streams:
                 # Apply height filter only to video streams
                 if 'bestvideo' in stream or 'video' in stream or stream.startswith('best['):
@@ -106,7 +106,7 @@ class YtdlpFormatMapper():
                 else:
                     # Leave audio streams and other selectors unchanged
                     filtered_streams.append(stream)
-            
+
             filtered_options.append('+'.join(filtered_streams))
-        
+
         return '/'.join(filtered_options)

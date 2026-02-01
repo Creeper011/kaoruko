@@ -14,7 +14,7 @@ class YamlLoader():
 
     def load(self) -> Dict[str, Any]:
         """Loads yaml file and return their data."""
-        
+
         try:
             with open(file=self.config_path, mode="r", encoding=YAML_FILE_ENCODING) as file:
                 data = yaml.safe_load(file) or {}
@@ -24,7 +24,7 @@ class YamlLoader():
             msg: str = f"Yaml file not found: {self.config_path}"
             self.logger.error(msg)
             raise YamlFailedLoad(msg)
-        
+
         except yaml.YAMLError as error:
             msg: str = f"Error on loading yaml file: {error}"
             self.logger.error(msg)

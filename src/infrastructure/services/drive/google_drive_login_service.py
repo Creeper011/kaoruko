@@ -18,7 +18,7 @@ class GoogleDriveLoginService():
         self.account_filepath = account_filepath
         self.drive_service: Optional[Resource] = None
         self._lock = asyncio.Lock()
-        
+
         self.logger.info("GoogleDriveLoginService initialized")
 
     async def login(self) -> None:
@@ -60,12 +60,12 @@ class GoogleDriveLoginService():
     async def get_instance_drive(self) -> Resource:
         """Returns the Drive service instance, logging in if necessary."""
         self.logger.debug("Getting Google Drive instance...")
-        
+
         async with self._lock:
             if self.drive_service is None:
                 self.logger.warning("Drive service was None, attempting to login...")
                 await self.login()
-                
+
             return self.drive_service
 
     def close_connection(self) -> None:

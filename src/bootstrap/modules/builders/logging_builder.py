@@ -17,6 +17,6 @@ class LoggingBuilder():
         logging.basicConfig(
             level=self.level,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            force=True,  
+            force=True,
         )
         return logging.getLogger()

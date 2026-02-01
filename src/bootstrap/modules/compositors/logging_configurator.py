@@ -21,11 +21,11 @@ class LoggingConfigurator(Compositor):
         log_level = logging.INFO
         if cli_args.debug:
             log_level = logging.DEBUG
-        
+
         # Recreate logging builder with the determined level
         self._logging_builder = LoggingBuilder(level=log_level)
         logger = self._logging_builder.build()
-        
+
         discord_http_logger = logging.getLogger("discord.http")
         discord_http_logger.setLevel(logging.WARNING)
         discord_gateway_logger = logging.getLogger("discord.gateway")

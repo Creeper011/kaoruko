@@ -17,3 +17,6 @@ clean:
 
 clean-cache:
 	./scripts/cleanup_cache.sh
+
+tree:
+	tree --gitignore > tree_project.txt

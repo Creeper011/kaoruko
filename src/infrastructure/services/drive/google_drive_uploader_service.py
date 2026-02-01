@@ -9,7 +9,7 @@ from src.core.constants import DRIVE_MAX_RETRY_COUNT, DRIVE_BASE_FILE_UPLOAD_URL
 
 class GoogleDriveUploaderService():
     """Service for uploading files to Google Drive."""
-    
+
     def __init__(self, login_service: GoogleDriveLoginService, drive_folder_id: str, max_retries: Optional[int] = DRIVE_MAX_RETRY_COUNT, logger: Optional[Logger] = None) -> None:
         self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.login_service = login_service
@@ -37,10 +37,10 @@ class GoogleDriveUploaderService():
                 drive_service = await self.login_service.get_instance_drive()
 
                 file_metadata = {
-                    'name': file_path.name, 
+                    'name': file_path.name,
                     'parents': [self.drive_folder_id]
                 }
-                
+
                 media = MediaFileUpload(str(file_path), resumable=True)
 
                 def _sync_upload():
@@ -63,7 +63,7 @@ class GoogleDriveUploaderService():
                     ).execute()
 
                 await asyncio.to_thread(_make_public)
-                
+
                 self.logger.info(f"File uploaded successfully. ID: {file_id}")
                 return "%s%s" % (DRIVE_BASE_FILE_UPLOAD_URL, file_id)
 

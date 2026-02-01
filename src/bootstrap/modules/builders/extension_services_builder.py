@@ -30,7 +30,7 @@ class ExtensionServicesBuilder(Builder):
 
         if self.settings.download_settings is None:
             raise RuntimeError("Download settings must be configured to build services.")
-        
+
         cache_manager = CacheManager(storage=JSONCacheStorage(logger=self.logger))
         downloader_service = DownloaderService(
             download_service=YtdlpDownloadService(ytdlp_format_mapper=YtdlpFormatMapper()),

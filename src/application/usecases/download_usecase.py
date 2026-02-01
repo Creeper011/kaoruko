@@ -12,7 +12,7 @@ from src.application.dto.output.download_output import DownloadOutput
 
 class DownloadUsecase():
     """Usecase for downloading files with caching and storage handling."""
-    
+
     def __init__(self, downloader_service: DownloaderService,
                  cache_manager: CacheManager, storage_service: RemoteStorageServiceProtocol,
                  temp_service: TempServiceProtocol, validator: DownloadRequestValidator,
@@ -41,6 +41,6 @@ class DownloadUsecase():
             decision = await self.decision_strategy.decide(request, downloaded_file)
             cache_key = self.download_cache_service.create_cache_key(request)
             return await self.download_cache_service.store_download(cache_key, downloaded_file, decision.destination, self.storage_service)
-            
+
     def _validate_request(self, request: DownloadRequest):
         self.validator.validate(request)

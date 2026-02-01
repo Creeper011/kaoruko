@@ -22,7 +22,7 @@ class DownloadRequestValidator():
         """
         if not self.url_validator.is_valid(request.url):
             raise UrlException(f"Invalid URL: {request.url}")
-        
+
         for site in self.blacklist_sites:
             if site in request.url:
                 raise BlacklistException(f"URL is blacklisted: {request.url}")

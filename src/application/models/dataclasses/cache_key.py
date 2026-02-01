@@ -7,5 +7,5 @@ from src.domain.enum.quality import Quality
 class CacheKey():
     """Unique identifier for cached items based on URL, format, and quality."""
     url: str
-    format_value: Formats 
+    format_value: Formats
     quality: Quality | None = None

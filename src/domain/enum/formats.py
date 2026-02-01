@@ -6,6 +6,6 @@ class Formats(Enum):
     MKV = "mkv"
     WEBM = "webm"
     OGG = "ogg"
-    
+
     def is_audio(self) -> bool:
         return self in {Formats.MP3, Formats.OGG}

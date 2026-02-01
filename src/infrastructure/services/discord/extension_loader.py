@@ -45,7 +45,7 @@ class ExtensionLoader():
             param_type = param.annotation
 
             found_service = next(
-                (service for service in self.services if isinstance(service, param_type)), 
+                (service for service in self.services if isinstance(service, param_type)),
                 None
             )
 
