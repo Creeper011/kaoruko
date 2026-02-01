@@ -10,15 +10,15 @@
 Kaoruko is a lovable Discord bot built with discord.py (Python) featuring a modular architecture.
 
 **Features:**
-- Download command (in progress)
-- Speed command (in progress)
+- Download command (with cache, remote storage and timed download) [Not all features is implemented]
+- Speed changer command (Not implemented yet)
 
 **Requirements:**
-- Python 3.12.5+
-- Make
+- [Python 3.12.5+](https://www.python.org/downloads/release/python-3125/)
+- [Make](https://www.gnu.org/software/make/)
 
 **Documentation:**
-- The documentation for Kaoruko can be found in ./docs folder (WIP).
+- The documentation for Kaoruko can be found in ./docs folder. [See the docs](./docs/)
 
 **Installation:**
 1. Clone the repository
