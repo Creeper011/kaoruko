@@ -12,6 +12,9 @@ download:
   blacklist_sites:
     - "example.com"
     - "anotherexample.com"
+  api_base_url: "http://127.0.0.1:8000"
+  api_poll_interval_seconds: 1.0
+  api_timeout_seconds: 1200.0
 
 drive:
   credentials_path: "/path/to/credentials.json"

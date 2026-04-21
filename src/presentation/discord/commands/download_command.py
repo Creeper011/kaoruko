@@ -1,3 +1,5 @@
+import io
+import time
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -10,6 +12,17 @@ from src.domain.enum.quality import Quality
 from src.presentation.discord.factories import ErrorEmbedFactory
 from src.core.constants import DEFAULT_DOWNLOAD_FORMAT
 
+SUPPORTED_DOWNLOAD_FORMATS: tuple[Formats, ...] = (
+    Formats.MP4,
+    Formats.MP3,
+)
+SUPPORTED_DOWNLOAD_QUALITIES: tuple[Quality, ...] = (
+    Quality._360,
+    Quality._480,
+    Quality._720,
+    Quality._1080,
+)
+
 class DownloadCog(commands.Cog):
     """Cog for download command."""
 
@@ -19,15 +32,17 @@ class DownloadCog(commands.Cog):
         self.download_settings = download_settings
 
     @app_commands.choices(format=[
-        app_commands.Choice(name=format.value, value=format.value) for format in Formats
+        app_commands.Choice(name=format.value, value=format.value) for format in SUPPORTED_DOWNLOAD_FORMATS
     ])
     @app_commands.choices(quality=[
-        app_commands.Choice(name=quality.value, value=quality.value) for quality in Quality
+        app_commands.Choice(name=quality.value, value=quality.value) for quality in SUPPORTED_DOWNLOAD_QUALITIES
     ])
     @app_commands.command(name="download", description="Download a file from a URL")
     async def download(self, interaction: discord.Interaction, url: str, format: Choice[str] | None = DEFAULT_DOWNLOAD_FORMAT, quality: Choice[str] | None = None) -> None:
         """Download command to download a file from a URL."""
         await interaction.response.defer()
+        last_progress_update_at = 0.0
+        last_progress_sent: int | None = None
 
         file_size_limit = self._calculate_file_size_limit(interaction)
 
@@ -40,7 +55,10 @@ class DownloadCog(commands.Cog):
             format_enum = self._parse_format(format)
 
         if format and format_enum is None:
-            await interaction.followup.send(f"Invalid format: {format}. Supported formats are: {', '.join([f.value for f in Formats])}")
+            supported = ", ".join(item.value for item in SUPPORTED_DOWNLOAD_FORMATS)
+            await interaction.edit_original_response(
+                content=f"Invalid format: {format}. Supported formats are: {supported}"
+            )
             return
 
         if quality is None:
@@ -57,24 +75,58 @@ class DownloadCog(commands.Cog):
         )
 
         try:
-            download_output = await self.download_usecase.execute(download_request)
+            await interaction.edit_original_response(content="Starting download...")
+
+            async def update_progress(progress: float) -> None:
+                nonlocal last_progress_update_at, last_progress_sent
+
+                rounded_progress = int(round(progress))
+                now = time.monotonic()
+                should_skip = (
+                    last_progress_sent is not None
+                    and rounded_progress < 100
+                    and rounded_progress - last_progress_sent < 5
+                    and (now - last_progress_update_at) < 1.5
+                )
+                if should_skip:
+                    return
+
+                last_progress_sent = rounded_progress
+                last_progress_update_at = now
+                await interaction.edit_original_response(
+                    content=f"Downloading... {rounded_progress}%"
+                )
+
+            download_output = await self.download_usecase.execute(
+                download_request,
+                progress_callback=update_progress,
+            )
             file_size_mb = self._bytes_to_megabytes(download_output.file_size) if download_output.file_size else "Unknown"
             elapsed = self._normalize_elapsed_time(download_output.elapsed)
 
             if download_output.file_url:
-                content = f"Download Completed! {f"Download Elapsed: {elapsed}s" if elapsed else None}, Filesize: {file_size_mb} MB\nLink: {download_output.file_url}"
-                await interaction.followup.send(content)
-            elif download_output.file_path:
-                content = f"Download Completed! {f'Elapsed: {elapsed}s' if elapsed else ''}, Filesize: {file_size_mb} MB"
-                await interaction.followup.send(file=discord.File(download_output.file_path), content=content)
+                elapsed_text = f"Elapsed: {elapsed}s, " if elapsed is not None else ""
+                content = f"Download Completed! {elapsed_text}Filesize: {file_size_mb} MB\nLink: {download_output.file_url}"
+                await interaction.edit_original_response(content=content)
+            elif download_output.file_bytes and download_output.file_name:
+                elapsed_text = f"Elapsed: {elapsed}s, " if elapsed is not None else ""
+                content = f"Download Completed! {elapsed_text}Filesize: {file_size_mb} MB"
+                discord_file = discord.File(
+                    io.BytesIO(download_output.file_bytes),
+                    filename=download_output.file_name,
+                )
+                await interaction.edit_original_response(
+                    content=content,
+                    attachments=[discord_file],
+                )
             else:
-                content = "Download completed, but no file URL or path was provided."
-                await interaction.followup.send(content)
+                content = "Download completed, but no file URL or bytes were provided."
+                await interaction.edit_original_response(content=content)
 
         except Exception as error:
             self.bot.logger.error(f"Unexpected error in download command: {error}", exc_info=error)
             embed = ErrorEmbedFactory.create_error_embed(error)
-            await interaction.followup.send(embed=embed)
+            await interaction.edit_original_response(content=None, embed=embed)
 
     def _calculate_file_size_limit(self, interaction: discord.Interaction) -> int:
         """Calculate the file size limit based on guild settings."""

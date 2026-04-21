@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 import time
 import logging
 from dataclasses import replace
@@ -10,10 +11,14 @@ class TimedDownloadUseCase():
         self.usecase = usecase
         self.logger = logger
 
-    async def execute(self, request: DownloadRequest) -> DownloadOutput:
+    async def execute(
+        self,
+        request: DownloadRequest,
+        progress_callback: Callable[[float], Awaitable[None]] | None = None,
+    ) -> DownloadOutput:
         start_time = time.perf_counter()
 
-        result = await self.usecase.execute(request)
+        result = await self.usecase.execute(request, progress_callback=progress_callback)
         elapsed_time = time.perf_counter() - start_time
 
         self.logger.info(f"Download process for {request.url} finished in {elapsed_time:.4f}s")

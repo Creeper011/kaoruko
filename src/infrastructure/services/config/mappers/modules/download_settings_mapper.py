@@ -20,10 +20,14 @@ class DownloadSettingsMapper(MapperProtocol):
         try:
             self.logger.debug(f"Mapping DownloadSettings from data: {data}")
             download_config: Dict[str, Any] = data.get("download", {})
+            defaults = DownloadSettings()
 
             download_settings = DownloadSettings(
                 file_size_limit=download_config.get("file_size_limit", DEFAULT_DOWNLOAD_FILESIZE_LIMIT),
-                blacklist_sites=download_config.get("blacklist_sites", DEFAULT_DOWNLOAD_BLACKLIST_SITES)
+                blacklist_sites=download_config.get("blacklist_sites", DEFAULT_DOWNLOAD_BLACKLIST_SITES),
+                api_base_url=download_config.get("api_base_url", defaults.api_base_url),
+                api_poll_interval_seconds=download_config.get("api_poll_interval_seconds", defaults.api_poll_interval_seconds),
+                api_timeout_seconds=download_config.get("api_timeout_seconds", defaults.api_timeout_seconds),
             )
 
             new_settings = dataclasses.replace(settings, download_settings=download_settings)

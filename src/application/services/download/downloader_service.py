@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from logging import Logger
 from pathlib import Path
 from src.application.protocols import DownloadServiceProtocol
@@ -11,6 +12,17 @@ class DownloaderService():
         self.logger = logger
         self.download_service = download_service
 
-    async def download(self, request: DownloadRequest, output_path: Path) -> DownloadedFile:
+    async def download(
+        self,
+        request: DownloadRequest,
+        output_path: Path,
+        progress_callback: Callable[[float], Awaitable[None]] | None = None,
+    ) -> DownloadedFile:
         """Download to the specified output path"""
-        return await self.download_service.download(request.url, request.format, request.quality, output_path)
+        return await self.download_service.download(
+            request.url,
+            request.format,
+            request.quality,
+            output_path,
+            progress_callback=progress_callback,
+        )

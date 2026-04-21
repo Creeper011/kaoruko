@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from typing import Protocol
 from pathlib import Path
 from src.domain.enum.formats import Formats
@@ -7,6 +8,13 @@ from src.domain.models import DownloadedFile
 class DownloadServiceProtocol(Protocol):
     """Protocol for download service."""
 
-    async def download(self, url: str, format_value: str | Formats, quality: Quality, output_folder: Path) -> DownloadedFile:
+    async def download(
+        self,
+        url: str,
+        format_value: str | Formats | None,
+        quality: Quality,
+        output_folder: Path,
+        progress_callback: Callable[[float], Awaitable[None]] | None = None,
+    ) -> DownloadedFile:
         """Download file from URL to output_folder."""
         ...

@@ -1,6 +1,7 @@
 import yt_dlp
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from typing import Optional
 from pathlib import Path
 from logging import Logger
@@ -54,7 +55,14 @@ class YtdlpDownloadService():
         """
         ...
 
-    async def download(self, url: str, format_value: Formats | None, quality: Quality, output_folder: Path) -> DownloadedFile:
+    async def download(
+        self,
+        url: str,
+        format_value: Formats | None,
+        quality: Quality,
+        output_folder: Path,
+        progress_callback: Callable[[float], Awaitable[None]] | None = None,
+    ) -> DownloadedFile:
         """
         Download file from URL using yt-dlp.
 
