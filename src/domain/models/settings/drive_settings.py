@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from pathlib import Path # domain shouldn't know about Path's existence, but I'll keep it here for now.
+from pathlib import Path
+from typing import Optional
 
 @dataclass(frozen=True)
 class DriveSettings:
-    credentials_path: Path
-    folder_id: str
+    credentials_path: Optional[Path] = None
+    folder_id: Optional[str] = None

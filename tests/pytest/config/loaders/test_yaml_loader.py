@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, mock_open, patch
-from src.core.constants import DEFAULT_ENV_CONFIG_PATH
-from src.infrastructure.services.config.loaders.yaml_loader import YamlLoader
+from src.constants import DEFAULT_ENV_CONFIG_PATH
+from src.services.config.loaders.yaml_loader import YamlLoader
 
 def test_yaml_loader_load_success() -> None:
     mock_yaml_content = "key1: value1\nkey2: 2"

@@ -15,3 +15,8 @@ class EnvFailedLoad(ConfigError):
     """Raised when loading configuration from environment variables fails."""
     def __init__(self, *args: object) -> None:
         super().__init__(*args, error_type=ErrorTypes.LOADER_ERROR)
+
+class YumlyFailedLoad(ConfigError):
+    """Raised when loading configuration from a Yumly file fails."""
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args, error_type=ErrorTypes.LOADER_ERROR)

@@ -1,4 +1,4 @@
-## Kaoruko (Discord Bot)
+## Kaoruko (moe moe moe)
 
 ![License](https://img.shields.io/github/license/Creeper011/kaoruko)
 ![Stars](https://img.shields.io/github/stars/Creeper011/kaoruko)
@@ -7,7 +7,7 @@
 
 <img src="https://count.getloli.com/get/@kaoruko?theme=rule34" width="500">
 
-Kaoruko is a lovable Discord bot built with discord.py (Python) featuring a modular architecture.
+Kaoruko is a lovable Discord bot built with discord.py (Python) featuring cute cute personal project.
 
 **Features:**
 - Download command (with cache, remote storage and timed download) [Not all features is implemented]
@@ -49,4 +49,4 @@ docker build -t kaoruko .
 docker run -d --name kaoruko -e TOKEN=your_discord_bot_token -p 8080:8080 kaoruko
 ```
 
-Made with fear and love by Creeper011
+Made with fear and love by yumeeeeeeeeene (yumene)

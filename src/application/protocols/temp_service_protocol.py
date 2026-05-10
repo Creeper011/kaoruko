@@ -9,4 +9,3 @@ class TempServiceProtocol(Protocol):
     async def create_session(self) -> AsyncGenerator[Path, None]:
         """Create a temporary folder session that cleans up itself."""
         ...
-        yield Path()

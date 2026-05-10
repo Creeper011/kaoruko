@@ -6,7 +6,7 @@ from aiohttp import web
 from src.domain.enum.formats import Formats
 from src.domain.enum.quality import Quality
 from src.domain.exceptions.download_exceptions import DownloadFailed
-from src.infrastructure.services.yumeapi import YumeApiDownloadService
+from src.services.yumeapi import YumeApiDownloadService
 
 
 async def _start_test_server(app: web.Application, port: int) -> web.AppRunner:

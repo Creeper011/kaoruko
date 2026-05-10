@@ -1,0 +1,39 @@
+;> Main configuration for Kaoruko <;
+include { ".env" }
+
+(application) {
+    version ;string = "0.0.1",
+
+    (discord) {
+        token ;env = $["TOKEN"],
+        prefix ;list[string] = ["*", "k!"],
+        owner_id ;int = 0000000000000000,
+        ;> supported: GUILDS, MESSAGES, MESSAGE_CONTENT <;
+        intents ;list[string] = [
+            "GUILDS",
+            "MESSAGES",
+            "MESSAGE_CONTENT"
+        ],
+    },
+
+    (services) {
+        (download) {
+            download_api ;string = "http://127.0.0.1:8000",
+
+            ;> in seconds <;
+            api_poll_interval ;float = 1.0,
+            api_timeout ;float = 1200.0 ,
+
+            file_size_limit ;int = 73400320, ;> in bytes <;
+            blacklist_sites ;list[string] = [
+                "netflix.com",
+                "hulu.com",
+            ],
+        },
+        (drive) {
+            credentials_path ;string = "drive_file.json",
+            ;> TODO: remove this later <;
+            folder_id ;string = "1V4SV5RyMPztclV55xRZIIol874-se-1n"
+        }
+    }
+}

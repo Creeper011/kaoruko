@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from src.core.constants import DEFAULT_ENV_CONFIG_PATH
-from src.infrastructure.services.config.loaders.env_loader import EnvLoader
+from src.constants import DEFAULT_ENV_CONFIG_PATH
+from src.services.config.loaders.env_loader import EnvLoader
 
 def test_env_loader_load_success() -> None:
     logger_mock = MagicMock()
@@ -11,8 +11,8 @@ def test_env_loader_load_success() -> None:
     fake_path.resolve.return_value = "/fake/.env"
     fake_path.name = ".env"
 
-    with patch("src.infrastructure.services.config.loaders.env_loader.load_dotenv"), \
-         patch("src.infrastructure.services.config.loaders.env_loader.dotenv_values",
+    with patch("src.services.config.loaders.env_loader.load_dotenv"), \
+         patch("src.services.config.loaders.env_loader.dotenv_values",
                return_value={"key1": "value1", "key2": "value2"}):
 
         env_loader = EnvLoader(logger=logger_mock, config_path=fake_path)
@@ -44,8 +44,8 @@ def test_env_loader_with_generic_error() -> None:
     fake_path.resolve.return_value = "/fake/.env"
 
     error_msg = "Simulated parsing error"
-    with patch("src.infrastructure.services.config.loaders.env_loader.load_dotenv"), \
-         patch("src.infrastructure.services.config.loaders.env_loader.dotenv_values",
+    with patch("src.services.config.loaders.env_loader.load_dotenv"), \
+         patch("src.services.config.loaders.env_loader.dotenv_values",
                side_effect=Exception(error_msg)):
 
         try:
@@ -61,8 +61,8 @@ def test_env_loader_with_empty_env() -> None:
     fake_path = MagicMock(spec=Path)
     fake_path.exists.return_value = True
 
-    with patch("src.infrastructure.services.config.loaders.env_loader.load_dotenv"), \
-         patch("src.infrastructure.services.config.loaders.env_loader.dotenv_values", return_value={}):
+    with patch("src.services.config.loaders.env_loader.load_dotenv"), \
+         patch("src.services.config.loaders.env_loader.dotenv_values", return_value={}):
 
         env_loader = EnvLoader(logger=logger_mock, config_path=fake_path)
         data = env_loader.load()

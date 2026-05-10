@@ -7,9 +7,9 @@ from src.application.dto.request.download_request import DownloadRequest
 from src.application.protocols.download_usecase_protocol import DownloadUseCaseProtocol
 
 class TimedDownloadUseCase():
-    def __init__(self, usecase: DownloadUseCaseProtocol, logger: logging.Logger):
+    def __init__(self, usecase: DownloadUseCaseProtocol, logger: logging.Logger | None = None):
         self.usecase = usecase
-        self.logger = logger
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
 
     async def execute(
         self,
